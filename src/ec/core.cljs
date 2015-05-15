@@ -62,3 +62,6 @@
     (swap! (.-data e) conj {(-keyword c) nc}) ))
 
 (def ! assoc)
+
+
+(prn '[ec.core])
