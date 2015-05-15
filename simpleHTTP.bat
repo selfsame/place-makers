@@ -1,2 +1,2 @@
-c:\Python26\python -m SimpleHTTPServer 8888
+c:\Python27\python -m SimpleHTTPServer 80
 pause
