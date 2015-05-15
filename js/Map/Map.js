@@ -5,8 +5,16 @@ function Map(w, h) {
   this.width = w || constants.DEFAULT_MAP_WIDTH;
   this.height = h || constants.DEFAULT_MAP_HEIGHT;
   this.layers = {
-    'pathing': new PathingLayer(this)
+    'pathing': new PathingLayer(this),
+    'ground': new GroundLayer(this)
   };
+}
+
+/*
+ * Load a map from saved json
+ */
+Map.prototype.load = function(save) {
+
 }
 
 /*
@@ -27,6 +35,7 @@ Map.prototype.get = function(x, y) {
  *  03 | -- | 04
  *  05 | 06 | 07
  *
+ * this is the same as calling Map.getRectNeighbors(x, y, 1, 1);
  */
 Map.prototype.neighbors = function(x, y) {
   var neighbors = [];
@@ -50,4 +59,39 @@ Map.prototype.neighbors = function(x, y) {
  */
 Map.prototype.isOutOfBounds = function(x, y) {
   return x < 0 || x >= this.width || y < 0 || y >= this.height;
+}
+
+/*
+ * Get all tiles within a (w by h) rectangle at (x, y)
+ * returns a 2d array of composited tiles
+ */
+Map.prototype.getInRect = function(x, y, w, h) {
+  var tiles = [];
+  for (var i = 0; i < h; i++) {
+    tiles[i] = [];
+    for (var j = 0; j < w; j++) {
+      tiles[i][j] = this.get(x + j, y + i);
+    }
+  }
+  return tiles;
+}
+
+/*
+ *  Retrieve all tiles immediately surrounding the given rectangle
+ */
+Map.prototype.getRectNeighbors = function(x, y, w, h) {
+  var tiles = [];
+
+  for (var i = -1; i < (h + 1); i++) {
+    tiles[y + i] = [];
+    tiles[y + i][x - 1] = this.get(x - 1, y + i);
+    tiles[y + i][x + w] = this.get(x + w, y + i);
+  }
+
+  for (var i = 0; i < w; i++) {
+    tiles[y - 1][x + i] = this.get(x + i, y - 1);
+    tiles[y + h][x + i] = this.get(x + i, y + h);
+  }
+
+  return tiles;
 }

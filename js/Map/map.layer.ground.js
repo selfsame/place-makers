@@ -39,3 +39,7 @@ GroundLayer.prototype.set = function(x, y, tile) {
 
   return tile;
 }
+
+GroundLayer.prototype.neighbors = function(x, y) {
+  return this._map.neighbors.bind(this)(x, y);
+}
