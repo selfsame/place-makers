@@ -5,6 +5,8 @@
 	(:require
     [clojure.browser.event :as event]))
 
+(enable-console-print!)
+
 (defn animation-frame [f] (.requestAnimationFrame js/window f))
 (defn append-child [el node] (.appendChild el node))
 
@@ -12,13 +14,15 @@
   (update [me] (draw (e me)) (animation-frame #(update (e me)))))
 
 
-(def TAGGED (atom {}))
+(def ^:private TAGGED (atom {}))
 
 (C tag [key]
   (init [me]
    (swap! TAGGED update-in [key] conj (e me))))
 
-(defn find [k] (get @TAGGED k))
+(defn find [k]
+  (if (string? k) (clj->js (get @TAGGED (keyword k)))
+      (get @TAGGED k)))
 
 
 (C children [col]
@@ -30,3 +34,4 @@
  (draw [this]
   (.every col (fn [c] (draw c) true))))
 
+(prn '[ec.standard])
