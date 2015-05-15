@@ -1,37 +1,43 @@
 <html>
-	<head>
-		<script type='text/javascript' id='lt_ws' src='http://localhost:57399/socket.io/lighttable/ws.js'></script>
-        <script type="text/javascript" src="js/cljs/main.js"></script>
-	</head>
-    <body>
-        <script>
+<head>
+	<script type="text/javascript" src="js/cljs/main.js"></script>
+	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
+</head>
+	<body>
+		<script type="text/javascript" src="js/components/game.js"></script>
+		<script type="text/javascript" src="js/components/pixie-renderer.js"></script>
+		<script type="text/javascript" src="js/components/children.js"></script>
+		<script>
 
-C = window.C;
+C("pos", {x:0, y:0});
+C("scale", {x:1, y:1});
 
-// components are defined with a string, which must be unique
-C.def(
-"demo",
-{name:"demo-component",
- x:0,
- y:0,
- randint:function(n){return parseInt(Math.random()*n);},
- init:function(c){c.x = c.randint(100);
-                  c.y = c.randint(100);
-                  console.log("init:" + c.name + ", " + c.x, c.y);}});
+C("wobble", 
+	{ update: function(c){
+ 		c.e.pos.x += Math.random() - 0.5;
+		c.e.pos.y += Math.random() - 0.5; }});
 
-// entities will construct components from data, but here's a manual component
-// constructing takes an object which is merged onto the default
-test = C.types.demo({name:"joe"});
+C("hobbit",
+	{ name:"pippin",
+		init:function(c){console.log("init", c.name);},
+		update:function(c){}});
 
-console.log(test);
-//ec.sys.c.ec.sys.comp_1633 {cljs$lang$protocol_mask$partition0$: 8390912, cljs$lang$protocol_mask$partition1$: 0, name: "joe", x: 0, y: 0…}
+window.game = E({
+	game:{},
+	pixie:{ width:800,
+				  height:500},
+	children:
+		{col:[
+			{ hobbit:{name:"frodo"},
+				sprite:{image:'assets/sprites/objects/alphasquare.png'},
+				pos:{x:100,y:100},
+				wobble:{},
+				children:{col:[
+					{hobbit:{name:"samwise"}}]}}]}});
 
-//if you were to do a hasOwnProperty loop you would find [x, y, name, randint]
+E.init(window.game);
 
-// components and entities use a protocol of core functions, c.init is protocol and hoisted, c.randint is normal
-C.call("init", test);
-
-        </script>
-    </body>
+		</script>
+	</body>
 </html>
 
