@@ -1,13 +1,7 @@
 (ns game.core
   (:use-macros [ec.macros :only [dom]])
-  (:require [ec.standard :as std]
-            [ec.sys :as sys]))
-
+  (:require [ec.core]))
 
 (enable-console-print!)
 
-
-
-
-(aset js/window "std" ec.standard)
 
