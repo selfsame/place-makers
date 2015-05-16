@@ -1,0 +1,34 @@
+* { box-sizing : border-box; }
+
+::selection { background: none repeat scroll 0% 0% #FFE1F4; }
+::-moz-selection { background: none repeat scroll 0% 0% #FFE1F4; }
+
+html {
+  position    : relative;
+  height      : 100vh;
+  color       : #706C66;
+  font-family : monospace;
+  font-weight : 400;
+  font-size   : 13px;
+  line-height : 1.3;
+  background  : none repeat scroll 0% 0% #FEFEFE;
+
+  -ms-text-size-adjust     : 100%;
+  -webkit-text-size-adjust : 100%;
+}
+
+body {
+  position : relative;
+  margin   : 0;
+}
+
+
+#pixi-container {
+  margin       : 16px;
+  display      : inline-block;
+  position     : relative;
+  border       : 1px solid red;
+}
+#pixi-container > canvas {
+  display : block;
+}

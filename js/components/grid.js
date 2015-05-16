@@ -16,7 +16,7 @@ C('grid', {
   /*
    * The type of array this grid uses
    */
-  'ArrayType': Array(),
+  'ArrayType': Array,
 
   /*
    * The real 1d array of tiles
@@ -24,8 +24,8 @@ C('grid', {
   '_tiles': false,
 
   'init': function(c) {
-    c._tiles = new c.type(c.width * c.height);
-    c.fill(0, 0, c.width, c.height, c.populate);
+    c._tiles = new c.ArrayType(c.width * c.height);
+    c.fill(0, 0, c.width, c.height, c.prePopulate);
   },
 
   /*
