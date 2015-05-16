@@ -16,3 +16,6 @@
 (defmacro gentype [s args & code]
   (let [sym# (gensym s)]
    `(deftype ~sym# ~args ~@code)))
+
+
+

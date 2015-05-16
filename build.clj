@@ -3,5 +3,5 @@
 
 (cljs.closure/watch "src"
 	{:main 'game.core
-	:output-to "js/cljs/main.js"
+	:output-to "js/cljs/dev.js"
 	:verbose true})
