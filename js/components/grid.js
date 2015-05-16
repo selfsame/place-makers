@@ -8,7 +8,7 @@ C('grid', {
    * `fill` is what default fill is
    * `ob` is what default out-of-bounds is
    */
-  'defaults' {
+  'defaults': {
     'fill': 0,
     'ob': 0
   },
@@ -131,7 +131,7 @@ C('grid', {
      }
 
      return tiles;
-   }
+   },
 
    /*
     * Transform the tile at given (x, y) by function fn.
@@ -140,7 +140,7 @@ C('grid', {
     */
    'transform': function(x, y, fn) {
      return this.set(x, y, fn(this.get(x, y), x, y));
-   }
+   },
 
    /*
     * Transform all tiles within given rectangle

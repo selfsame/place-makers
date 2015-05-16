@@ -5,14 +5,14 @@
 </head>
 	<body>
 		<script type="text/javascript" src="js/components/game.js"></script>
-		<script type="text/javascript" src="js/components/pixie-renderer.js"></script>
+		<script type="text/javascript" src="js/components/pixi-renderer.js"></script>
 		<script type="text/javascript" src="js/components/children.js"></script>
 		<script>
 
 C("pos", {x:0, y:0});
 C("scale", {x:1, y:1});
 
-C("wobble", 
+C("wobble",
 	{ update: function(c){
  		c.e.pos.x += Math.random() - 0.5;
 		c.e.pos.y += Math.random() - 0.5; }});
