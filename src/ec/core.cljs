@@ -56,7 +56,7 @@
 
 (defn C [s o]
   (if (get @components s)
-    (throw (str "Component Error: duplicate define for " s))
+    (prn (str "Component Warning: duplicate define for " s)))
     (let [s1 (group-by proto? (js->clj o))
           prots (into {} (get s1 true))
           props (into {} (get s1 false))
@@ -68,10 +68,9 @@
                  (type [o] _comp_)
                  ILookup
                  (-lookup [o k]
-                  (-lookup o k nil))
+                  (-lookup o (clj->js k) nil))
                 (-lookup [o k nf]
-                 (or (cond (string? k) (aget o k)
-                           (keyword? k) (aget o (clj->js k))) nf))
+                 (or (aget o (clj->js k)) nf))
                  IMapEntry
                  (-key [o] (first o))
                  (-val [o] (last o))
@@ -89,14 +88,14 @@
           structor (fn [data]
                      (let [instance (Type. s)
                            uid (swap! UID inc)]
-                       (mapv (fn [[k v]] (aset instance k (clj->js v)))
+                       (mapv (fn [[k v]] (aset instance (clj->js k) (clj->js v)))
                          (conj props (js->clj data)))
                        (install-js-hidden-get-prop instance "uid" (fn [] uid))
                        instance))]
 
       (swap! components update-in [s] merge {:props props :prots prots :structor structor})
       (aset (.-types js/C) s structor)
-      structor)))
+      structor))
 
 
 
@@ -107,6 +106,7 @@
   (-seq [o] (seq comps))
   ILookup
   (-lookup [o k] (aget o (clj->js k)))
+  (-lookup [o k nf] (or (aget o (clj->js k)) nf))
   IAssociative
   (-contains-key? [o k] (if (aget o (clj->js k)) true false))
   (-assoc [o k v] (aset o (clj->js k) v))
