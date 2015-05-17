@@ -149,7 +149,7 @@
      (destroy [o] (.-destroy o))
      (serialize [o] (propagate o serialize))
      (deserialize [o v] (propagate o deserialize))
-     (HTML [o] (str "<entity>" "<type>E<uid>"(-uid o)"</uid></type>"
+     (HTML [o] (str "<entity><type>"(.-name o)"<uid>"(-uid o)"</uid></type>"
                 (apply str (mapv #(str "<component>"
                                    (str "<type>" (.-type %)
                                         "<uid>" (-uid %) "</uid>" "</type>"
@@ -232,16 +232,18 @@
 
 
 
-(defn E [& more]
-  (let [o (Ent.
+(defn E [tag & more]
+  (let [[nombre parts] (if (string? tag) [tag more] ["" (cons tag more)])
+        o (Ent.
      {:components (UIDsetAPI (Ent. (set [])))
       :children (UIDsetAPI (Ent. (set [])))})]
     (let [uid (swap! UID inc)]
       (aset o "uid" uid)
+      (aset o "name" nombre)
       (swap! UID->OBJ conj {uid o}))
 
   (EntityAPI (UIDAPI o))
-  (mapv #(.add o %) more)
+  (mapv #(.add o %) parts)
   o))
 
 
@@ -333,7 +335,8 @@
 (prn '[ec.core])
 
 (defn inspect [e]
-  (let [debug (dom div {})]
+  (let [debug (or (.getElementById js/document "debug")
+                  (dom div {:id "debug" :style "float:right;"}))]
     (aset debug "innerHTML" (HTML e))
     (.appendChild (.-body js/document) debug)
   ))
