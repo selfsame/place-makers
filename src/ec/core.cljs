@@ -1,12 +1,28 @@
 (ns ec.core
   (:require-macros
-   [ec.macros :refer [gentype]]))
+   [ec.macros :refer [dom gentype def-api]]))
 
 (enable-console-print!)
 
-(declare prots props s)
+(js* "window.locals = function(o){
+ _o = new Array();
+ for(k in o){if(o.hasOwnProperty(k)){_o.push(k);}}
+ return _o;}")
+
+(js* "window.clone = function(o){
+ _o = new o.constructor();
+ for(k in o){if(o.hasOwnProperty(k)){_o[k] = o[k];}}
+ return _o;}")
+
 
 (defonce UID (atom 0))
+
+(def reserved #{"e" "uid"})
+
+(defn remove! [o k] (goog.object.remove o k))
+
+(defn log [x] (.log js/console x))
+
 
 (defprotocol IThing
   (init [o])
@@ -14,135 +30,316 @@
   (destroy [o])
   (serialize [o])
   (deserialize [o m])
-  (copy [o]))
+  (copy [o])
+  (HTML [o]))
 
 (def proto-map
-  {"init"        #(init %)
-   "update"      #(update %)
-   "destroy"     #(destroy %)
-   "serialize"   #(serialize %)
-   "deserialize" #(deserialize %1 %2)
-   "copy"        #(copy %)})
+  {:init        #(init %)
+   :update      #(update %)
+   :destroy     #(destroy %)
+   :serialize   #(serialize %)
+   :deserialize #(deserialize %1 %2)
+   :copy        #(copy %)
+   :HTML        #(HTML %)})
 
-(def reserved #{"e" "uid"})
 
-(defonce components (atom {}))
+(defonce COMPOCOLS (atom {}))
 
-(defn proto? [[k v]] (or (and (get proto-map k) (fn? v)) false))
+(defonce UID->OBJ (atom {}))
 
-(defprotocol
-  IComponent
-  (type [o]))
+(defonce BIND->UIDSET (atom {}))
 
-(defn component? [o] true)
-
-(defn remove! [o k] (goog.object.remove o k))
-
+(defonce BIND->NEWFN (atom {}))
 
 ;; from https://github.com/dribnet/mrhyde/blob/master/src/cljs/mrhyde/typepatcher.cljs
-(def install-js-hidden-get-prop ((fn []
-  (let [reusable-descriptor (js-obj)]
-    (aset reusable-descriptor "configurable" true)
-    (aset reusable-descriptor "enumerable" false)
-    (fn internal-js-getset-prop [obj nam getfn]
-      (aset reusable-descriptor "get" getfn)
-      (.defineProperty js/Object obj nam reusable-descriptor))))))
+(def install-js-hidden-get-prop
+  ((fn []
+     (let [reusable-descriptor (js-obj)]
+       (aset reusable-descriptor "configurable" true)
+       (aset reusable-descriptor "enumerable" false)
+       (fn internal-js-getset-prop [obj nam getfn]
+         (aset reusable-descriptor "get" getfn)
+         (.defineProperty js/Object obj nam reusable-descriptor))))))
+
+(def property-lock!
+  ((fn []
+     (let [reusable-descriptor (js-obj)]
+       (aset reusable-descriptor "enumerable" false)
+       (aset reusable-descriptor "writable" false)
+       (fn internal-js-getset-prop [obj nam]
+         (.defineProperty js/Object obj nam reusable-descriptor))))))
 
 
-(defn message [s o]
-  (when (component? o)
-    (when-let [f (get proto-map s)] (f o))))
+(defn ->uid [o] (.-uid o))
+(defn ->o [uid] (get @UID->OBJ uid))
+(defn ->bind [o] (aget o "type"))
 
-
-(defn C [s o]
-  (if (get @components s)
-    (prn (str "Component Warning: duplicate define for " s)))
-    (let [s1 (group-by proto? (js->clj o))
-          prots (into {} (get s1 true))
-          props (into {} (get s1 false))
-          js-props (clj->js props)
-          Type (gentype "comp-" [_comp_]
-                 IPrintWithWriter
-                 (-pr-writer [o writer opts] (-write writer (str _comp_ "<" (apply str (interpose "," (keys o))) ">")))
-                 IComponent
-                 (type [o] _comp_)
-                 ILookup
-                 (-lookup [o k]
-                  (-lookup o (clj->js k) nil))
-                (-lookup [o k nf]
-                 (or (aget o (clj->js k)) nf))
-                 IMapEntry
-                 (-key [o] (first o))
-                 (-val [o] (last o))
-                 ISeqable
-                 (-seq [o]
-                    (map #(vector % (get o %)) (keys (:props (get @components _comp_)))))
-                 IThing
-                  (init [me]  ((get (:prots (get @components _comp_)) "init" #()) me))
-                  (update [me] ((get (:prots (get @components _comp_)) "update" #()) me))
-                  (destroy [me] ((get (:prots (get @components _comp_)) "destroy" #()) me))
-                  (serialize [me] ((get (:prots (get @components _comp_)) "serialize" #()) me))
-                  (deserialize [me v] ((get (:prots (get @components _comp_)) "deserialize" #()) me v))
-                  (copy [me] ((get (:prots (get @components _comp_)) "copy" #()) me)))
-
-          structor (fn [data]
-                     (let [instance (Type. s)
-                           uid (swap! UID inc)]
-                       (mapv (fn [[k v]] (aset instance (clj->js k) (clj->js v)))
-                         (conj props (js->clj data)))
-                       (install-js-hidden-get-prop instance "uid" (fn [] uid))
-                       instance))]
-
-      (swap! components update-in [s] merge {:props props :prots prots :structor structor})
-      (aset (.-types js/C) s structor)
-      structor))
+(defn object-display [o]
+  (let [ks ((aget js/window "locals") o)]
+    (mapv (fn [k]
+             (if (= "_api_" k) ""
+               (str "<li> " k ":" (aget o k) "</li>"))
+              ) ks)))
 
 
 
-(deftype Entity [comps]
-  IPrintWithWriter
-  (-pr-writer [o writer opts] (-write writer (str "<E" (aget o "uid") "> " (map type comps))))
-  ISeqable
-  (-seq [o] (seq comps))
-  ILookup
-  (-lookup [o k] (aget o (clj->js k)))
-  (-lookup [o k nf] (or (aget o (clj->js k)) nf))
-  IAssociative
-  (-contains-key? [o k] (if (aget o (clj->js k)) true false))
-  (-assoc [o k v] (aset o (clj->js k) v))
-  IMap
-  (-dissoc [o k] (remove! o (clj->js k)))
+(extend-type js/Object
+  ICloneable
+  (-clone [o] (.clone js/window o))
+ IThing
+  (init [me] ((get (get @COMPOCOLS (->bind me))  "init"  (fn [o])) me))
+  (update [me] ((get (get @COMPOCOLS (->bind me))  "update"  (fn [o])) me))
+  (destroy [me] ((get (get @COMPOCOLS (->bind me))  "destroy"  (fn [o])) me))
+  (serialize [me] ((get (get @COMPOCOLS (->bind me))  "serialize" (fn [o])) me))
+  (deserialize [me data] ((get (get @COMPOCOLS (->bind me))  "deserialize" (fn [a b] )) me))
+  (copy [me]  ((get (get @COMPOCOLS (->bind me))  "copy"  #()) me))
+  (HTML [me] ((get (get @COMPOCOLS (->bind me))  "HTML"  #(apply str (object-display me))) me))
+  )
+
+
+
+
+
+(extend-type js/Number
+  ICloneable
+  (-clone [o] (js/Number. (.valueOf o))))
+
+(extend-type nil
+  ICloneable
+  (-clone [o] nil)
+ IThing
+  (init [me])
+  (update [me])
+  (destroy [me])
+  (serialize [me])
+  (deserialize [me data])
+  (copy [me] [me])
+  (HTML [me] " undefined ")
+  )
+
+
+(defprotocol IUid
+  (-uid [o])
+  (-o [o]))
+
+(extend-type js/Number
+  IUid
+  (-uid [o] (.valueOf o))
+  (-o [o] (get @UID->OBJ (int o))))
+
+(extend-type js/Object
+  IUid
+  (-uid [o] (.-uid o))
+  (-o [o] o))
+
+
+(defn propagate [o f] (mapv f (remove nil? (map #(get @UID->OBJ %) (concat @(:children @o) @(:components @o))))))
+
+(deftype Ent [data]
+  Object
+  (toString [o] (str "E"))
+  IDeref
+  (-deref [this] data)
+  ISwap
+  (-swap! [o f] (aset o "data" (f data)))
+  (-swap! [o f x] (aset o "data" (f data x)))
+  (-swap! [o f x y] (aset o "data" (f data x y)))
+  (-swap! [o f x y z] (aset o "data" (f data x y z)))
   IThing
-  (init [o] (.every comps (fn [c] (init c) true)))
-  (update [o] (.every comps (fn [c] (update c) true)))
-  (destroy [o] (.every comps (fn [c] (destroy c) true)))
-  (serialize [o] (.every comps (fn [c] (serialize c) true)))
-  (deserialize [o v] (.every comps (fn [c] (serialize c) true)))
-  (copy [o] o))
+     (init [o] (propagate o init))
+     (update [o] (propagate o update))
+     (destroy [o] (.-destroy o))
+     (serialize [o] (propagate o serialize))
+     (deserialize [o v] (propagate o deserialize))
+     (HTML [o] (str "<entity>" "<type>E<uid>"(-uid o)"</uid></type>"
+                (apply str (mapv #(str "<component>"
+                                   (str "<type>" (.-type %)
+                                        "<uid>" (-uid %) "</uid>" "</type>"
+                                    (HTML %))
+                                   "</component>")
+                 (remove nil? (map #(get @UID->OBJ %) @(:components @o)))))
+                "<children>"
+                (apply str (map HTML (remove nil? (map #(get @UID->OBJ %) @(:children @o)))))
+                "</children></entity>")))
+
+(deftype Comp [data]
+  IDeref
+  (-deref [this] data)
+  ISwap
+  (-swap! [o f] (aset o "data" (f data)))
+  (-swap! [o f x] (aset o "data" (f data x)))
+  (-swap! [o f x y] (aset o "data" (f data x y)))
+  (-swap! [o f x y z] (aset o "data" (f data x y z))))
 
 
-(defn map->compmap [[k m]]
-  (if-let [{:keys [structor]} (get @components (clj->js k))]
-    {(clj->js k) (structor (clj->js m))} {}))
+(def-api ChildAPI [o p]
+  "parent" {:doc " Returns the owning entity."
+            :get (fn [] p)})
+
+
+(def-api UIDAPI [o]
+  "uid" {:lock "uid"
+         :doc "protected uid int"})
+
+(def-api EntityAPI [o]
+  "type" {:get (fn [] "Entity")}
+  "children" {:doc " Array of direct child entities."
+             :get (fn [] (aget (:children @o) "objects"))}
+  "components" {:doc " Array of components."
+          :get (fn [] (aget (:components @o) "objects"))}
+  "recur" {:doc " [f] applies f to all children and components."
+          :value (fn [f] (mapv #(.recur % f)
+                        (remove nil?
+                         (map #(get @UID->OBJ %) @(:children @o)))))}
+  "add"
+  {:doc " [o] mounts a component or entity."
+   :value (fn [v] (let [uid (-uid v)
+                        other   (or (-o v) v)]
+                     (let [typ (aget v "type")
+                           slot (or (get {"Entity" :children} typ) :components)]
+                      (.add (slot @o) uid)
+                      (ChildAPI other o)
+                      (when (= :components slot)
+                        (when-not (aget o typ)
+                          (aset o typ other) )))))}
+
+  "destroy"
+  {:doc " [] destroys this entity and all ancestor components and children."
+   :value (fn [] (prn (concat (aget (:children @o) "uids")
+                       (aget (:components @o) "uids")))
+            (aset (:children @o) "data" #{})
+            (aset (:components @o) "data" #{})
+            )})
+
+
+(def-api UIDsetAPI [o]
+  "objects" {:doc " Array of set as objects."
+             :get (fn [] (to-array (remove nil? (map #(get @UID->OBJ %) @o))))}
+  "uids" {:doc " Array of set."
+          :get (fn [] (to-array (.-data o)))}
+  "length" {:doc " count of set." :get (fn [] (count @o))}
+  "add"
+  {:doc " [v] v must be a valid uid or uid'd object."
+   :value (fn [v] (if-let [uid (-uid v)] (do (aset o "data" (conj @o uid)) uid) false))}
+  "remove"
+  {:doc " [v] returns uid or false if not found."
+   :value (fn [v] (if ((.-data o) (-uid v))
+             (do (aset o "data" (disj @o (-uid v)))
+               (-uid v))
+             false))})
+
+
+(def-api ComponentAPI [o]
+  "type" {:get (fn [] (aget o "_comp_"))})
 
 
 
-(defn E
-  ([] (E {}))
-  ([data]
-   (let [compmap (into {} (map map->compmap (js->clj data)))
-         comparray (into-array (vals compmap))
-         e (Entity.  comparray)
-         uid (swap! UID inc)]
-     (mapv (fn [[k v]] (aset e k v)) compmap)
-     (mapv (fn [c] (install-js-hidden-get-prop c "e" (fn [] e))) comparray)
-     (install-js-hidden-get-prop e "uid" (fn [] uid))
-     e)))
+(defn E [& more]
+  (let [o (Ent.
+     {:components (UIDsetAPI (Ent. (set [])))
+      :children (UIDsetAPI (Ent. (set [])))})]
+    (let [uid (swap! UID inc)]
+      (aset o "uid" uid)
+      (swap! UID->OBJ conj {uid o}))
+
+  (EntityAPI (UIDAPI o))
+  (mapv #(.add o %) more)
+  o))
 
 
 
-(mapv (fn [[k v]] (aset C k v)) {"types" (js-obj)})
-(mapv (fn [[k v]] (aset E k v)) proto-map)
+
+
+
+
+(defn C [bind data protocols]
+  (let [valid-protocols
+        (select-keys (js->clj protocols) (map clj->js (keys proto-map)))
+
+        structor
+        (fn [o]
+
+
+          (let [uid (swap! UID inc)
+
+                instance
+                (specify o
+                 ;IPrintWithWriter
+                 ;(-pr-writer [o writer opts]
+                 ; (-write writer (str (->bind o) (->uid o))))
+                 )]
+
+            ;(aset instance "_comp_" bind)
+            ;(property-lock! instance "_comp_")
+
+
+
+            (aset instance "uid" uid)
+            (UIDAPI instance)
+
+            (aset instance "_comp_" bind)
+            (property-lock! instance "_comp_")
+            (ComponentAPI instance)
+
+            (swap! UID->OBJ conj {uid instance})
+            (swap! BIND->UIDSET update-in [bind] #(conj (or % #{}) uid))
+
+            instance))
+        newfn (fn [] (structor data))]
+    (swap! COMPOCOLS conj {bind valid-protocols})
+    (swap! BIND->NEWFN conj {bind newfn})
+    (aset (aget js/C "new") bind newfn)
+    newfn))
+
+
+
+
+
+(defn -destroy [o]
+  (when-let [uid (.-_uid_ o)]
+    (swap! UID->OBJ dissoc uid)
+  (when-let [bind (.-_comp_ o)]
+    (swap! BIND->UIDSET update-in [bind] disj uid))
+    ))
+
+(defn uid-every [this f]
+  (let [c (.-length this)]
+    (loop [i 0]
+        (when (< i c)
+          (f (->o (aget this i)))
+          (recur (inc i))))))
+
+(def e-api
+  {"find" #(clj->js (filter  (fn [o] (= (.-_comp_ o) %)) (js->clj [])))
+   "push" (fn [v] (when-let [uid (->uid v)]
+                    (aset v (inc (.-length v)) uid)))}
+                    )
+
+(defn add-api [e]
+  (aset e "find" #(clj->js (filter  (fn [o] (= (.-_comp_ o) %)) (js->clj (.valueOf e) ))))
+  (aset e "push" (fn [v] (when-let [uid (->uid v)]
+                    (aset e (inc (.-length e)) uid))) )
+  (property-lock! e "find")
+  (property-lock! e "push"))
+
+
+
+(defn -find [o s] (js->clj (filter #(= (.-_comp_ %) s) (js->clj o))))
+
+(defn find-bound [s] (map #(get @UID->OBJ %) (get @BIND->UIDSET s)))
+
+
+
+
+
+(mapv
+  (fn [[k v]]
+    (aset E (clj->js k) v)
+    (property-lock! E (clj->js k)))
+  proto-map)
+
+(aset C "new" (js-obj))
+
 
 
 (when-not (.-C js/window )
@@ -151,4 +348,11 @@
 
 (prn '[ec.core])
 
-(str ::pathing-layer)
+(defn inspect [e]
+  (let [debug (dom div {})]
+    (aset debug "innerHTML" (HTML e))
+    (.appendChild (.-body js/document) debug)
+  ))
+
+(aset js/window "inspect" inspect)
+
