@@ -31,11 +31,11 @@ C("sprite",{
    function(c){
      c.texture = PIXI.Texture.fromImage(c.image);
      c.instance = new PIXI.Sprite(c.texture);
-     game.pixie.stage.addChild(c.instance);
+     root.pixi.stage.addChild(c.instance);
    },
    update:
    function(c){
-     c.instance.x = c.e.pos.x;
-     c.instance.y = c.e.pos.y;
+     c.instance.x = c.parent.transform.x;
+     c.instance.y = c.parent.transform.y;
    }
   });
