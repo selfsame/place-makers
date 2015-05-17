@@ -19,3 +19,33 @@
 
 
 
+(defmacro def-api [sym args & spec]
+  (let [apiname (str sym)
+        o (first args)
+        entries (filter #(string? (first %)) (partition 2 spec))
+        api (str sym "\n=======\n" (apply str
+              (mapv (fn [[k v]]
+                      (str k ": " (or (:doc v) "no doc.") "\n"))
+               entries)) "\n")
+        code (mapcat
+               (fn [[s f]]
+                 (cond
+                   (and (map? f) (:get f))
+                   [(list 'install-js-hidden-get-prop o s (:get f))]
+
+                   (and (map? f) (:value f))
+                   [(list 'aset o s (:value f))]
+
+                   (:lock f)
+                   [(list 'property-lock! o s)]
+
+                   :else
+                   [])) entries)]
+    `(def ~sym
+       (fn ~args
+         ~@code
+         (~'aset ~o "_api_" (str (~'aget ~o "_api_") ~api))
+         (~'install-js-hidden-get-prop ~o "API" #(~'.log ~'js/console (~'aget ~o "_api_")))
+         ~o))))
+
+

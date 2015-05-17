@@ -1,0 +1,2 @@
+;; Analyzed by ClojureScript 0.0-3211
+{:name ec.standard, :doc nil, :excludes #{}, :use-macros {}, :require-macros {ec.macros ec.macros}, :uses nil, :requires {event clojure.browser.event, clojure.browser.event clojure.browser.event}, :imports nil}
