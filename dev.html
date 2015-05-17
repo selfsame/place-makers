@@ -3,6 +3,7 @@
     <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
 	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/cljs/dev.js"></script>
+    <script type="text/javascript" src="js/components/standard.js"></script>
     <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
 
     <link href="css/ce.css" type="text/css" rel="stylesheet">
@@ -13,39 +14,39 @@
 <script>
 
 
-    C("pos", {x:0, y:0},
-      {HTML:function(c){return "<"+c.x+","+c.y+">";}});
-
-
     C("actor",
-      {name: "joe"},
+      {name: ""},
       {init: function(c){
+          c.name = c.parent.name || "none";
           console.log("init:" + c.name);
       },
        update: function(c){
-           console.log(c.parent.pos.x, c.parent.pos.y);
+           console.log(c.parent.transform.position.x,
+                       c.parent.transform.position.y);
        }})
 
-    C("children", [0, 1], {});
 
     C("wander", {speed:2},
       {update: function(c){
-          c.parent.pos.x += Math.random() * c.speed - 0.5 * c.speed;
-          c.parent.pos.y += Math.random() * c.speed - 0.5 * c.speed; }});
+          c.parent.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
+          c.parent.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
 
-    makeActor = function(){
-      return E( C.new.actor(),
-                C.new.pos(),
-                C.new.children());}
+    makeActor = function(name){
+        res = E(name,
+                C.new.transform(),
+                C.new.actor());
+        res.transform.position.x = Math.random() * 600;
+        return res;}
 
-    root = E(
-        C.new.pixi(),
-        C.new.pos(),
-        C.new.wander(),
-        makeActor(),
-        makeActor(),
-        makeActor());
+    root =
+        E("game",
+          C.new.pixi(),
+          C.new.loop(),
+          E( "people",
+              makeActor("Joe"),
+              makeActor("Dalton"),
+              makeActor("Samwise")));
 
 
 
