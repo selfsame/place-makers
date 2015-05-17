@@ -1,16 +1,17 @@
 <html>
 <head>
     <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
-	<script type="text/javascript" src="js/cljs/dev.js"></script>
 	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
+    <script type="text/javascript" src="js/cljs/dev.js"></script>
+    <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
 
     <link href="css/ce.css" type="text/css" rel="stylesheet">
 
 </head>
 	<body>
         <script type="text/javascript" src="js/Constants.js"></script>
-
 <script>
+
 
     C("pos", {x:0, y:0},
       {HTML:function(c){return "<"+c.x+","+c.y+">";}});
@@ -39,6 +40,7 @@
                 C.new.children());}
 
     root = E(
+        C.new.pixi(),
         C.new.pos(),
         C.new.wander(),
         makeActor(),
@@ -46,13 +48,17 @@
         makeActor());
 
 
-    E.init(root);
-    E.update(root);
-    E.update(root);
 
-    window.inspect(root)
+    window.onload = function(e){
+        console.log("ready");
+        E.init(root);
+        window.inspect(root);
+    };
+
+
 
 </script>
+
 	</body>
 </html>
 

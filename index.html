@@ -2,6 +2,7 @@
 <head>
     <script type="text/javascript" src="js/cljs/main.js"></script>
 	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
+    <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
 
     <link href="css/ce.css" type="text/css" rel="stylesheet">
 
@@ -44,6 +45,7 @@
                 C.new.pos());}
 
     root = E(
+        C.new.pixi(),
         C.new.coords(),
         E(C.new.coords(),
           makeActor(),
