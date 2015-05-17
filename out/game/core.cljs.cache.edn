@@ -1,2 +1,0 @@
-;; Analyzed by ClojureScript 0.0-3211
-{:name game.core, :doc nil, :excludes #{}, :use-macros {gentype ec.macros, dom ec.macros}, :require-macros {ec.macros ec.macros}, :uses {->bind ec.core, ->o ec.core, init ec.core, destroy ec.core, C ec.core, find-bound ec.core, E ec.core}, :requires {ec.core ec.core}, :imports nil}

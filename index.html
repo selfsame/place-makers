@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script type="text/javascript" src="js/cljs/dev.js"></script>
+    <script type="text/javascript" src="js/cljs/main.js"></script>
 	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
 
     <link href="css/ce.css" type="text/css" rel="stylesheet">
@@ -10,6 +10,13 @@
         <script type="text/javascript" src="js/Constants.js"></script>
 
 <script>
+
+    window.locals = function(o){
+     _o = new Array();
+     for(k in o){if(o.hasOwnProperty(k)){_o.push(k);}}
+     return _o;}
+
+
 
     C("pos", {x:0, y:0},
       {HTML:function(c){return "<"+c.x+","+c.y+">";}});
@@ -24,7 +31,7 @@
            console.log(c.parent.pos.x, c.parent.pos.y);
        }})
 
-    C("children", [0, 1], {});
+    C("coords", [0, 1], {});
 
     C("wander", {speed:2},
       {update: function(c){
@@ -34,14 +41,15 @@
 
     makeActor = function(){
       return E( C.new.actor(),
-                C.new.pos(),
-                C.new.children());}
+                C.new.pos());}
 
     root = E(
-        C.new.pos(),
-        C.new.wander(),
-        makeActor(),
-        makeActor(),
+        C.new.coords(),
+        E(C.new.coords(),
+          makeActor(),
+          makeActor()),
+        E(C.new.pos(),
+          C.new.wander()),
         makeActor());
 
 

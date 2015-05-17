@@ -4,6 +4,16 @@
 
 (enable-console-print!)
 
+(js* "window.locals = function(o){
+ _o = new Array();
+ for(k in o){if(o.hasOwnProperty(k)){_o.push(k);}}
+ return _o;}")
+
+(js* "window.clone = function(o){
+ _o = new o.constructor();
+ for(k in o){if(o.hasOwnProperty(k)){_o[k] = o[k];}}
+ return _o;}")
+
 
 (defonce UID (atom 0))
 
@@ -59,22 +69,13 @@
        (fn internal-js-getset-prop [obj nam]
          (.defineProperty js/Object obj nam reusable-descriptor))))))
 
-(js* "window.clone = function(o){
- _o = new o.constructor();
- for(k in o){if(o.hasOwnProperty(k)){_o[k] = o[k];}}
- return _o;}")
-
-(js* "window.locals = function(o){
- _o = new Array();
- for(k in o){if(o.hasOwnProperty(k)){_o.push(k);}}
- return _o;}")
 
 (defn ->uid [o] (.-uid o))
 (defn ->o [uid] (get @UID->OBJ uid))
-(defn ->bind [o] (.-_comp_ o))
+(defn ->bind [o] (aget o "type"))
 
 (defn object-display [o]
-  (let [ks (js/locals o)]
+  (let [ks ((aget js/window "locals") o)]
     (mapv (fn [k]
              (if (= "_api_" k) ""
                (str "<li> " k ":" (aget o k) "</li>"))
@@ -90,7 +91,7 @@
   (update [me] ((get (get @COMPOCOLS (->bind me))  "update"  (fn [o])) me))
   (destroy [me] ((get (get @COMPOCOLS (->bind me))  "destroy"  (fn [o])) me))
   (serialize [me] ((get (get @COMPOCOLS (->bind me))  "serialize" (fn [o])) me))
-  (deserialize [me] ((get (get @COMPOCOLS (->bind me))  "deserialize" (fn [a b] )) me))
+  (deserialize [me data] ((get (get @COMPOCOLS (->bind me))  "deserialize" (fn [a b] )) me))
   (copy [me]  ((get (get @COMPOCOLS (->bind me))  "copy"  #()) me))
   (HTML [me] ((get (get @COMPOCOLS (->bind me))  "HTML"  #(apply str (object-display me))) me))
   )
@@ -111,7 +112,7 @@
   (update [me])
   (destroy [me])
   (serialize [me])
-  (deserialize [me])
+  (deserialize [me data])
   (copy [me] [me])
   (HTML [me] " undefined ")
   )
@@ -183,9 +184,9 @@
 (def-api EntityAPI [o]
   "type" {:get (fn [] "Entity")}
   "children" {:doc " Array of direct child entities."
-             :get (fn [] (.-objects (:children @o)))}
+             :get (fn [] (aget (:children @o) "objects"))}
   "components" {:doc " Array of components."
-          :get (fn [] (.-objects (:components @o)))}
+          :get (fn [] (aget (:components @o) "objects"))}
   "recur" {:doc " [f] applies f to all children and components."
           :value (fn [f] (mapv #(.recur % f)
                         (remove nil?
@@ -194,7 +195,7 @@
   {:doc " [o] mounts a component or entity."
    :value (fn [v] (let [uid (-uid v)
                         other   (or (-o v) v)]
-                     (let [typ (.-type v)
+                     (let [typ (aget v "type")
                            slot (or (get {"Entity" :children} typ) :components)]
                       (.add (slot @o) uid)
                       (ChildAPI other o)
@@ -204,8 +205,8 @@
 
   "destroy"
   {:doc " [] destroys this entity and all ancestor components and children."
-   :value (fn [] (prn (concat (.-uids (:children @o))
-                       (.-uids (:components @o))))
+   :value (fn [] (prn (concat (aget (:children @o) "uids")
+                       (aget (:components @o) "uids")))
             (aset (:children @o) "data" #{})
             (aset (:components @o) "data" #{})
             )})
@@ -213,23 +214,23 @@
 
 (def-api UIDsetAPI [o]
   "objects" {:doc " Array of set as objects."
-             :get (fn [] (to-array (remove nil? (map #(get @UID->OBJ %) (.-data o)))))}
+             :get (fn [] (to-array (remove nil? (map #(get @UID->OBJ %) @o))))}
   "uids" {:doc " Array of set."
           :get (fn [] (to-array (.-data o)))}
-  "length" {:doc " count of set." :get (fn [] (count (.-data o)))}
+  "length" {:doc " count of set." :get (fn [] (count @o))}
   "add"
   {:doc " [v] v must be a valid uid or uid'd object."
    :value (fn [v] (if-let [uid (-uid v)] (do (aset o "data" (conj @o uid)) uid) false))}
   "remove"
   {:doc " [v] returns uid or false if not found."
    :value (fn [v] (if ((.-data o) (-uid v))
-             (do (aset o "data" (disj (.-data o) (-uid v)))
+             (do (aset o "data" (disj @o (-uid v)))
                (-uid v))
              false))})
 
 
 (def-api ComponentAPI [o]
-  "type" {:get (fn [] (.-_comp_ o))})
+  "type" {:get (fn [] (aget o "_comp_"))})
 
 
 
@@ -271,6 +272,8 @@
             ;(aset instance "_comp_" bind)
             ;(property-lock! instance "_comp_")
 
+
+
             (aset instance "uid" uid)
             (UIDAPI instance)
 
@@ -285,7 +288,7 @@
         newfn (fn [] (structor data))]
     (swap! COMPOCOLS conj {bind valid-protocols})
     (swap! BIND->NEWFN conj {bind newfn})
-    (aset (.-new C) bind newfn)
+    (aset (aget js/C "new") bind newfn)
     newfn))
 
 
