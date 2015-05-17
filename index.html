@@ -1,43 +1,46 @@
+<!doctype html>
 <html>
 <head>
-	<script type="text/javascript" src="js/cljs/main.js"></script>
-	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
+  <meta charset='utf-8'>
+
+  <title>place-makers</title>
+
+	<link rel='stylesheet', type='text/css', href='css/base.css'>
+
 </head>
-	<body>
-		<script type="text/javascript" src="js/components/game.js"></script>
-		<script type="text/javascript" src="js/components/pixi-renderer.js"></script>
-		<script type="text/javascript" src="js/components/children.js"></script>
-		<script>
+<body>
+	<div class='page'>
+	  <div id='game-container'>
+	    <pre id='game-monitor'></pre>
+	    <div id='pixi-container'></div>
+		</div>
 
-C("pos", {x:0, y:0});
-C("scale", {x:1, y:1});
+		<div id='controls'>
+			<button type='button' id='control-start'>start</button>
+			<button type='button' id='control-pause'>pause</button>
+		</div>
+	</div>
 
-C("wobble",
-	{ update: function(c){
- 		c.e.pos.x += Math.random() - 0.5;
-		c.e.pos.y += Math.random() - 0.5; }});
+	<script type='text/javascript' src='js/lib/pixi.min.js'></script>
+	<script type='text/javascript' src='js/lib/whale.js'></script>
 
-C("hobbit",
-	{ name:"pippin",
-		init:function(c){console.log("init", c.name);},
-		update:function(c){}});
+  <script> whale.register('pixi', PIXI); </script>
 
-window.game = E({
-	game:{},
-	pixie:{ width:800,
-				  height:500},
-	children:
-		{col:[
-			{ hobbit:{name:"frodo"},
-				sprite:{image:'assets/sprites/objects/alphasquare.png'},
-				pos:{x:100,y:100},
-				wobble:{},
-				children:{col:[
-					{hobbit:{name:"samwise"}}]}}]}});
+  <script type='text/javascript' src='js/pm.constants.js'></script>
 
-E.init(window.game);
+  <script type='text/javascript' src='js/pm.utils.js'></script>
+	<script type='text/javascript' src='js/pm.game.js'></script>
+	<script type='text/javascript' src='js/pm.game.monitor.js'></script>
 
-		</script>
-	</body>
+  <script type='text/javascript' src='js/pm.assets.js'></script>
+
+	<script type='text/javascript' src='js/pm.map.grid.js'></script>
+	<script type='text/javascript' src='js/pm.map.layer.pathing.js'></script>
+	<script type='text/javascript' src='js/pm.map.layer.ground.js'></script>
+	<script type='text/javascript' src='js/pm.map.layer.graphic.js'></script>
+
+	<script type='text/javascript' src='js/pm.view.controls.js'></script>
+
+	<script type='text/javascript' src='js/main.js'></script>
+</body>
 </html>
-
