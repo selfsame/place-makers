@@ -21,8 +21,7 @@
           console.log("init:" + c.name);
       },
        update: function(c){
-           console.log(c.parent.transform.position.x,
-                       c.parent.transform.position.y);
+
        }})
 
 
@@ -35,8 +34,12 @@
     makeActor = function(name){
         res = E(name,
                 C.new.transform(),
-                C.new.actor());
+                C.new.actor()
+//                 C.new.sprite()
+               );
         res.transform.position.x = Math.random() * 600;
+
+        //res.sprite.image = "assets/sprites/objects/alphasquare.png";
         return res;}
 
     root =

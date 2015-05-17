@@ -51,6 +51,9 @@
 
 (defonce BIND->NEWFN (atom {}))
 
+(def NAME->UID (atom {}))
+
+
 ;; from https://github.com/dribnet/mrhyde/blob/master/src/cljs/mrhyde/typepatcher.cljs
 (def install-js-hidden-get-prop
   ((fn []
@@ -131,7 +134,11 @@
   (-uid [o] (.-uid o))
   (-o [o] o))
 
-(defn propagate [o f] (mapv f (remove nil? (map #(get @UID->OBJ %) (concat @(:children @o) @(:components @o))))))
+(defn propagate [o f]
+  (mapv f (remove nil?
+           (map #(get @UID->OBJ %)
+            (concat
+              @(:components @o)@(:children @o) )))))
 
 (deftype Ent [data]
   Object
@@ -231,6 +238,14 @@
   "type" {:get (fn [] (aget o "_comp_"))})
 
 
+(def-api FinderAPI [o]
+  "find" {:doc "[string *boolean] globally finds entity or undefined (optional boolean true will return Array)"
+          :value (fn [s & all] (prn s all)
+                   ((if (first all) to-array first)
+                               (map -o (remove nil? (get @NAME->UID s)))))})
+
+
+
 
 (defn E [tag & more]
   (let [[nombre parts] (if (string? tag) [tag more] ["" (cons tag more)])
@@ -240,12 +255,12 @@
     (let [uid (swap! UID inc)]
       (aset o "uid" uid)
       (aset o "name" nombre)
+      (swap! NAME->UID update-in [nombre] conj uid)
       (swap! UID->OBJ conj {uid o}))
 
-  (EntityAPI (UIDAPI o))
+  (EntityAPI (FinderAPI (UIDAPI o)))
   (mapv #(.add o %) parts)
   o))
-
 
 
 
@@ -295,25 +310,6 @@
           (f (->o (aget this i)))
           (recur (inc i))))))
 
-(def e-api
-  {"find" #(clj->js (filter  (fn [o] (= (.-_comp_ o) %)) (js->clj [])))
-   "push" (fn [v] (when-let [uid (->uid v)]
-                    (aset v (inc (.-length v)) uid)))}
-                    )
-
-(defn add-api [e]
-  (aset e "find" #(clj->js (filter  (fn [o] (= (.-_comp_ o) %)) (js->clj (.valueOf e) ))))
-  (aset e "push" (fn [v] (when-let [uid (->uid v)]
-                    (aset e (inc (.-length e)) uid))) )
-  (property-lock! e "find")
-  (property-lock! e "push"))
-
-
-
-(defn -find [o s] (js->clj (filter #(= (.-_comp_ %) s) (js->clj o))))
-
-(defn find-bound [s] (map #(get @UID->OBJ %) (get @BIND->UIDSET s)))
-
 
 
 
@@ -336,7 +332,7 @@
 
 (defn inspect [e]
   (let [debug (or (.getElementById js/document "debug")
-                  (dom div {:id "debug" :style "float:right;"}))]
+                  (dom div {:id "debug" :style "float:right;white-space:pre;"}))]
     (aset debug "innerHTML" (HTML e))
     (.appendChild (.-body js/document) debug)
   ))
