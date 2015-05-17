@@ -1,11 +1,12 @@
 
-C("pixie",{
-    renderer: false,
+C("pixi",
+  { renderer: false,
     stage:false,
     width:640,
     height:480,
-    ready: false,
-    init:
+   ready: false},
+
+  { init:
     function(c){
       c.renderer = PIXI.autoDetectRenderer(c.width, c.height);
       document.body.appendChild(c.renderer.view);
@@ -22,18 +23,19 @@ C("pixie",{
 
 
 C("sprite",{
-    image: "",
-    texture: false,
-    instance: false,
-    init:
-    function(c){
-      c.texture = PIXI.Texture.fromImage(c.image);
-      c.instance = new PIXI.Sprite(c.texture);
-      game.pixie.stage.addChild(c.instance);
-    },
-    update:
-    function(c){
-      c.instance.x = c.e.pos.x;
-      c.instance.y = c.e.pos.y;
-    }
+  image: "",
+  texture: false,
+  instance: false},
+
+  {init:
+   function(c){
+     c.texture = PIXI.Texture.fromImage(c.image);
+     c.instance = new PIXI.Sprite(c.texture);
+     game.pixie.stage.addChild(c.instance);
+   },
+   update:
+   function(c){
+     c.instance.x = c.e.pos.x;
+     c.instance.y = c.e.pos.y;
+   }
   });

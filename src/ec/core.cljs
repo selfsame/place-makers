@@ -78,12 +78,11 @@
   (let [ks ((aget js/window "locals") o)]
     (mapv (fn [k]
              (if (= "_api_" k) ""
-               (str "<li> " k ":" (aget o k) "</li>"))
+               (str "<li> " k ":" (prn-str (aget o k)) "</li>"))
               ) ks)))
 
 
-
-(extend-type js/Object
+(extend-type default
   ICloneable
   (-clone [o] (.clone js/window o))
  IThing
@@ -97,10 +96,10 @@
   )
 
 
+(def number js/Number)
 
 
-
-(extend-type js/Number
+(extend-type number
   ICloneable
   (-clone [o] (js/Number. (.valueOf o))))
 
@@ -127,11 +126,10 @@
   (-uid [o] (.valueOf o))
   (-o [o] (get @UID->OBJ (int o))))
 
-(extend-type js/Object
+(extend-type default
   IUid
   (-uid [o] (.-uid o))
   (-o [o] o))
-
 
 (defn propagate [o f] (mapv f (remove nil? (map #(get @UID->OBJ %) (concat @(:children @o) @(:components @o))))))
 
@@ -255,25 +253,11 @@
 (defn C [bind data protocols]
   (let [valid-protocols
         (select-keys (js->clj protocols) (map clj->js (keys proto-map)))
-
         structor
         (fn [o]
-
-
           (let [uid (swap! UID inc)
-
                 instance
-                (specify o
-                 ;IPrintWithWriter
-                 ;(-pr-writer [o writer opts]
-                 ; (-write writer (str (->bind o) (->uid o))))
-                 )]
-
-            ;(aset instance "_comp_" bind)
-            ;(property-lock! instance "_comp_")
-
-
-
+                (specify o )]
             (aset instance "uid" uid)
             (UIDAPI instance)
 
@@ -355,4 +339,5 @@
   ))
 
 (aset js/window "inspect" inspect)
+
 
