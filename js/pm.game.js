@@ -72,7 +72,7 @@ whale.Service('pm.game', ['pm.constants'], {
   },
 
   unhook: function(target) {
-    delete this._hooks(target._id);
+    delete this._hooks[target._id];
   },
 
   start: function() {
