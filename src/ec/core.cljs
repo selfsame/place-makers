@@ -149,11 +149,11 @@
      (fast-iterate o #(aset o2 %1 (-clone %2))) o2)))
 
 
-(extend-type js/String
+(extend-type string
   ICloneable
   (-clone [o] (.valueOf o)))
 
-(extend-type js/Function
+(extend-type function
   ICloneable
   (-clone [o] (.valueOf o)))
 
@@ -179,7 +179,7 @@
   (-uid [o])
   (-o [o]))
 
-(extend-type js/Number
+(extend-type number
   IUid
   (-uid [o] (.valueOf o))
   (-o [o] (get @UID->OBJ (int o))))
@@ -387,8 +387,6 @@ COMPOCOLS
   (aset js/window "C" C)
   (aset js/window "E" E))
 
-(prn '[ec.core])
-
 (defn inspect [e]
   (let [debug (or (.getElementById js/document "debug")
                   (dom div {:id "debug" :style "float:right;white-space:pre;"}))]
@@ -398,3 +396,5 @@ COMPOCOLS
 (aset js/window "inspect" inspect)
 
 (aset js/window "__all__" __all__)
+
+((aget js/window "ec_hello"))
