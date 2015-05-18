@@ -15,6 +15,8 @@
  return _o;}")
 
 
+
+
 (defonce UID (atom 0))
 
 (def reserved #{"e" "uid"})
@@ -35,7 +37,7 @@
 
 (def proto-map
   {:init        #(init %)
-   :update      #(update %)
+   :update      (fn ([] (__all__ update))([o] (__all__ update)))
    :destroy     #(destroy %)
    :serialize   #(serialize %)
    :deserialize #(deserialize %1 %2)
@@ -52,6 +54,16 @@
 (defonce BIND->NEWFN (atom {}))
 
 (def NAME->UID (atom {}))
+
+
+(defn __all__ [f]
+  (let [ss (vec (vals @UID->OBJ))]
+      (let [c (count ss)]
+        (loop [i 0]
+          (if (> i c) true
+            (do (f (get ss i))
+
+              (recur (inc i))))))))
 
 
 ;; from https://github.com/dribnet/mrhyde/blob/master/src/cljs/mrhyde/typepatcher.cljs
@@ -140,6 +152,10 @@
             (concat
               @(:components @o)@(:children @o) )))))
 
+
+
+
+
 (deftype Ent [data]
   Object
   (toString [o] (str "E"))
@@ -152,7 +168,8 @@
   (-swap! [o f x y z] (aset o "data" (f data x y z)))
   IThing
      (init [o] (propagate o init))
-     (update [o] (propagate o update))
+     (update [o] ;(propagate o update)
+      )
      (destroy [o] (.-destroy o))
      (serialize [o] (propagate o serialize))
      (deserialize [o v] (propagate o deserialize))
@@ -274,7 +291,8 @@
         (fn [o]
           (let [uid (swap! UID inc)
                 instance
-                (specify o )]
+               ; (specify
+                  (-clone o)]
             (aset instance "uid" uid)
             (UIDAPI instance)
 
@@ -340,3 +358,4 @@
 (aset js/window "inspect" inspect)
 
 
+(aset js/window "__all__" __all__)

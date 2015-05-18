@@ -12,7 +12,9 @@
 	<body>
         <script type="text/javascript" src="js/Constants.js"></script>
 <script>
-
+    C("clock", new Date(),
+      {HTML:function(c){
+          return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
 
     C("actor",
       {name: ""},
@@ -27,6 +29,7 @@
 
     C("wander", {speed:2},
       {update: function(c){
+
           c.parent.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
           c.parent.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
@@ -34,24 +37,27 @@
     makeActor = function(name){
         res = E(name,
                 C.new.transform(),
-                C.new.actor()
-//                 C.new.sprite()
-               );
+                C.new.actor(),
+                C.new.sprite(),
+                C.new.wander() );
         res.transform.position.x = Math.random() * 600;
+        res.transform.position.y = Math.random() * 400;
 
-        //res.sprite.image = "assets/sprites/objects/alphasquare.png";
+        res.sprite.image = "assets/sprites/objects/alphasquare.png";
         return res;}
 
     root =
         E("game",
+          C.new.clock(),
           C.new.pixi(),
           C.new.loop(),
           E( "people",
               makeActor("Joe"),
               makeActor("Dalton"),
               makeActor("Samwise")));
-
-
+    for (i = 0;i<100;i++){
+        root.find("people").add(makeActor("anon"));
+    }
 
     window.onload = function(e){
         console.log("ready");

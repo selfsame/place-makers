@@ -35,7 +35,9 @@ C("sprite",{
    },
    update:
    function(c){
-     c.instance.x = c.parent.transform.x;
-     c.instance.y = c.parent.transform.y;
+     c.instance.rotation = Math.random();
+     c.instance.x = c.parent.transform.position.x;
+     c.instance.y = c.parent.transform.position.y;
+
    }
   });
