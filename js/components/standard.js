@@ -5,5 +5,5 @@ C("transform",{
 
 C("loop",
   {},
-  {init:function(c){window.requestAnimationFrame(function(){E.update(c.parent);});},
-   update:function(c){window.requestAnimationFrame(function(){E.update(c.parent);});}});
+  {init:function(c){window.requestAnimationFrame(E.update);},
+   update:function(c){window.requestAnimationFrame(E.update);}});
