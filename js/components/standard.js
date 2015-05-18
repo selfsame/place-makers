@@ -2,7 +2,7 @@ C("transform",{
   position: {x:0,y:0},
   scale: {x:0,y:0},
   rotation: 0},
-  {init:function(c){c.position = {x:0,y:0}}});
+  {});
 
 C("loop",
   {},

@@ -1,6 +1,7 @@
 <html>
 <head>
 	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
+    <script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src="js/cljs/main.js"></script>
     <script type="text/javascript" src="js/components/standard.js"></script>
     <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
@@ -13,32 +14,19 @@
 
 <script>
 
-    window.locals = function(o){
-     _o = new Array();
-     for(k in o){if(o.hasOwnProperty(k)){_o.push(k);}}
-     return _o;}
 
-
-C("clock", new Date(),
-      {HTML:function(c){
-          return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
 
     C("actor",
       {name: ""},
       {init: function(c){
           c.name = c.parent.name || "none";
-          console.log("init:" + c.name);
           c.parent.transform.position.x = Math.random() * 600;
-          c.parent.transform.position.y = Math.random() * 400;
-      },
-       update: function(c){
-
-       }})
+          c.parent.transform.position.y = Math.random() * 400; },
+       update: function(c){}})
 
 
     C("wander", {speed:2},
       {update: function(c){
-
           c.parent.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
           c.parent.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
@@ -56,21 +44,21 @@ C("clock", new Date(),
 
     root =
         E("game",
-          C.new.clock(),
           C.new.pixi(),
           C.new.loop(),
-          E( "people",
-              makeActor("Joe"),
-              makeActor("Dalton"),
-              makeActor("Samwise")));
-    for (i = 0;i<2000;i++){
-        root.find("people").add(makeActor("anon"));
+          E( "people"));
+
+    holder = root.find("people");
+    for (i = 0;i<6000;i++){
+        holder.add(makeActor("anon"));
     }
 
     window.onload = function(e){
         console.log("ready");
         E.init(root);
+        //window.inspect(root);
     };
+
 
 </script>
 	</body>

@@ -1,7 +1,8 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
-	<script type="text/javascript" src='js/lib/pixi.min.js'></script>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:50747/socket.io/lighttable/ws.js'></script>
+    <script type="text/javascript" src='js/lib/pixi.min.js'></script>
+    <script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src="js/cljs/dev.js"></script>
     <script type="text/javascript" src="js/components/standard.js"></script>
     <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
@@ -16,11 +17,13 @@
       {HTML:function(c){
           return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
 
+    C("S", PIXI.Sprite,
+      {})
+
     C("actor",
       {name: ""},
       {init: function(c){
           c.name = c.parent.name || "none";
-          console.log("init:" + c.name);
           c.parent.transform.position.x = Math.random() * 600;
           c.parent.transform.position.y = Math.random() * 400;
       },
@@ -52,18 +55,20 @@
           C.new.clock(),
           C.new.pixi(),
           C.new.loop(),
+
           E( "people",
               makeActor("Joe"),
               makeActor("Dalton"),
               makeActor("Samwise")));
-    for (i = 0;i<1000;i++){
-        root.find("people").add(makeActor("anon"));
+    holder = root.find("people");
+    for (i = 0;i<6000;i++){
+        holder.add(makeActor("anon"));
     }
 
     window.onload = function(e){
         console.log("ready");
         E.init(root);
-        window.inspect(root);
+        //window.inspect(root);
     };
 
 
