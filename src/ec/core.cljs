@@ -4,19 +4,14 @@
 
 (enable-console-print!)
 
-(js* "window.locals = function(o){
- _o = new Array();
- for(k in o){if(o.hasOwnProperty(k)){_o.push(k);}}
- return _o;}")
-
-(js* "window.clone = function(o){
- _o = new o['constructor']();
- for(k in o){if(o.hasOwnProperty(k)){
- _o[k] = o[k];}}
- return _o;}")
 
 
-
+(defn fast-iterate [col f]
+  (let [c (count col)]
+    (loop [i 0]
+      (when (< i c)
+        (f i (aget col i))
+        (recur (inc i))))))
 
 (defonce UID (atom 0))
 
@@ -56,15 +51,25 @@
 
 (def NAME->UID (atom {}))
 
+(def __cache__ (atom []))
+(def __dirty__ #js {"uid_obj" false})
+(add-watch UID->OBJ :change
+           (fn [k r os ns]
+             (if-not (.-uid_obj __dirty__)
+               (aset __dirty__ "uid_obj" true)
+             )))
+
+
+
+
 
 (defn __all__ [f]
-  (let [ss (vec (vals @UID->OBJ))]
-      (let [c (count ss)]
-        (loop [i 0]
-          (if (> i c) true
-            (do (f (get ss i))
-
-              (recur (inc i))))))))
+  (let [ff (fn [o] (f o) true)
+        ss (if (aget __dirty__ "uid_obj")
+             (do (aset __dirty__ "uid_obj" false)
+                 (reset! __cache__ (to-array (vals @UID->OBJ))))
+             @__cache__)]
+    (.every ss ff)))
 
 
 ;; from https://github.com/dribnet/mrhyde/blob/master/src/cljs/mrhyde/typepatcher.cljs
@@ -98,12 +103,31 @@
               ) ks)))
 
 
+
+;(time (do (js/Uint16Array. 100000000) true))
+;(time (do (js/Array. 100000000) true))
+
 (extend-type default
   ICloneable
-  (-clone [o] (.clone js/window o))
+  (-clone [o]
+   (let [o2 (js/____c o)]
+     (dorun
+      (for [[k v] (seq o)]
+       (aset o2 k (-clone v)))) o2))
+  ISeqable
+  (-seq [o] (map #(list % (aget o %)) (.keys js/Object o)))
+  ILookup
+  (-lookup [this k]
+    (-lookup this k nil))
+  (-lookup [this k not-found]
+    (let [v (aget this k)]
+      (or v not-found)))
+  IMapEntry
+  (-key [o] (first o))
+  (-val [o] (last o))
  IThing
   (init [me] ((get (get @COMPOCOLS (->bind me))  "init"  (fn [o])) me))
-  (update [me] ((get (get @COMPOCOLS (->bind me))  "update"  (fn [o])) me))
+  (update [me] )
   (destroy [me] ((get (get @COMPOCOLS (->bind me))  "destroy"  (fn [o])) me))
   (serialize [me] ((get (get @COMPOCOLS (->bind me))  "serialize" (fn [o])) me))
   (deserialize [me data] ((get (get @COMPOCOLS (->bind me))  "deserialize" (fn [a b] )) me))
@@ -112,12 +136,30 @@
   )
 
 
-(def number js/Number)
+(extend-type array
+  ICloneable
+  (-clone [o]
+   (let [o2 (js/____c o (.-length o))]
+     (fast-iterate o #(aset o2 %1 (-clone %2))) o2)))
 
+(extend-type js/Uint8Array
+  ICloneable
+  (-clone [o]
+   (let [o2 (js/____c o (.-length o))]
+     (fast-iterate o #(aset o2 %1 (-clone %2))) o2)))
+
+
+(extend-type js/String
+  ICloneable
+  (-clone [o] (.valueOf o)))
+
+(extend-type js/Function
+  ICloneable
+  (-clone [o] (.valueOf o)))
 
 (extend-type number
   ICloneable
-  (-clone [o] (js/Number. (.valueOf o))))
+  (-clone [o] (.valueOf o)))
 
 (extend-type nil
   ICloneable
@@ -258,10 +300,9 @@
 
 (def-api FinderAPI [o]
   "find" {:doc "[string *boolean] globally finds entity or undefined (optional boolean true will return Array)"
-          :value (fn [s & all] (prn s all)
+          :value (fn [s & all]
                    ((if (first all) to-array first)
                                (map -o (remove nil? (get @NAME->UID s)))))})
-
 
 
 
@@ -282,18 +323,19 @@
 
 
 
-
-
+COMPOCOLS
 
 (defn C [bind data protocols]
   (let [valid-protocols
         (select-keys (js->clj protocols) (map clj->js (keys proto-map)))
+        _update (or (get valid-protocols "update") (fn [o]))
         structor
         (fn [o]
           (let [uid (swap! UID inc)
                 instance
-               ; (specify
-                  (-clone o)]
+               (specify o
+                IThing
+                  (update [me] (_update me)))]
             (aset instance "uid" uid)
             (UIDAPI instance)
 
@@ -341,8 +383,6 @@
 
 (aset C "new" (js-obj))
 
-
-
 (when-not (.-C js/window )
   (aset js/window "C" C)
   (aset js/window "E" E))
@@ -353,10 +393,8 @@
   (let [debug (or (.getElementById js/document "debug")
                   (dom div {:id "debug" :style "float:right;white-space:pre;"}))]
     (aset debug "innerHTML" (HTML e))
-    (.appendChild (.-body js/document) debug)
-  ))
+    (.appendChild (.-body js/document) debug)))
 
 (aset js/window "inspect" inspect)
-
 
 (aset js/window "__all__" __all__)
