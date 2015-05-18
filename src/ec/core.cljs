@@ -10,8 +10,9 @@
  return _o;}")
 
 (js* "window.clone = function(o){
- _o = new o.constructor();
- for(k in o){if(o.hasOwnProperty(k)){_o[k] = o[k];}}
+ _o = new o['constructor']();
+ for(k in o){if(o.hasOwnProperty(k)){
+ _o[k] = o[k];}}
  return _o;}")
 
 

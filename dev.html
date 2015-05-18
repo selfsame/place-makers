@@ -21,6 +21,8 @@
       {init: function(c){
           c.name = c.parent.name || "none";
           console.log("init:" + c.name);
+          c.parent.transform.position.x = Math.random() * 600;
+          c.parent.transform.position.y = Math.random() * 400;
       },
        update: function(c){
 
@@ -40,8 +42,7 @@
                 C.new.actor(),
                 C.new.sprite(),
                 C.new.wander() );
-        res.transform.position.x = Math.random() * 600;
-        res.transform.position.y = Math.random() * 400;
+
 
         res.sprite.image = "assets/sprites/objects/alphasquare.png";
         return res;}
@@ -55,7 +56,7 @@
               makeActor("Joe"),
               makeActor("Dalton"),
               makeActor("Samwise")));
-    for (i = 0;i<100;i++){
+    for (i = 0;i<1000;i++){
         root.find("people").add(makeActor("anon"));
     }
 

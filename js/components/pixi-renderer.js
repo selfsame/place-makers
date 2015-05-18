@@ -35,7 +35,7 @@ C("sprite",{
    },
    update:
    function(c){
-     c.instance.rotation = Math.random();
+     c.instance.rotation += Math.random() * 0.01;
      c.instance.x = c.parent.transform.position.x;
      c.instance.y = c.parent.transform.position.y;
 

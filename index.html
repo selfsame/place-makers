@@ -19,21 +19,26 @@
      return _o;}
 
 
+C("clock", new Date(),
+      {HTML:function(c){
+          return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
 
     C("actor",
       {name: ""},
       {init: function(c){
           c.name = c.parent.name || "none";
           console.log("init:" + c.name);
+          c.parent.transform.position.x = Math.random() * 600;
+          c.parent.transform.position.y = Math.random() * 400;
       },
        update: function(c){
-           console.log(c.parent.transform.position.x,
-                       c.parent.transform.position.y);
+
        }})
 
 
     C("wander", {speed:2},
       {update: function(c){
+
           c.parent.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
           c.parent.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
@@ -41,27 +46,31 @@
     makeActor = function(name){
         res = E(name,
                 C.new.transform(),
-                C.new.actor());
-        res.transform.position.x = Math.random() * 600;
+                C.new.actor(),
+                C.new.sprite(),
+                C.new.wander() );
+
+
+        res.sprite.image = "assets/sprites/objects/alphasquare.png";
         return res;}
 
     root =
         E("game",
+          C.new.clock(),
           C.new.pixi(),
           C.new.loop(),
           E( "people",
               makeActor("Joe"),
               makeActor("Dalton"),
               makeActor("Samwise")));
-
-
+    for (i = 0;i<2000;i++){
+        root.find("people").add(makeActor("anon"));
+    }
 
     window.onload = function(e){
         console.log("ready");
         E.init(root);
-        window.inspect(root);
     };
-
 
 </script>
 	</body>
