@@ -17,7 +17,10 @@ C("pixi",
     },
     update:
     function(c){
-      if (c.ready){ c.renderer.render(c.stage); }
+
+      if (c.ready){
+
+        c.renderer.render(c.stage); }
     }
   });
 
@@ -36,8 +39,12 @@ C("sprite",{
    update:
    function(c){
      c.instance.rotation += Math.random() * 0.01;
-     c.instance.x = c.parent.transform.position.x;
-     c.instance.y = c.parent.transform.position.y;
+     c.instance.x = c.owner.transform.position.x;
+     c.instance.y = c.owner.transform.position.y;
 
+   },
+   destroy:
+   function(c){
+     c.instance.parent.removeChild(c.instance);
    }
   });

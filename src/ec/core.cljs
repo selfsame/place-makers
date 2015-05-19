@@ -1,17 +1,20 @@
 (ns ec.core
+
   (:require-macros
    [ec.macros :refer [dom gentype def-api]]))
 
 (enable-console-print!)
 
+(declare Ent)
 
+(def NAME->UID (js/Object.))
+(defonce UID->OBJ (atom {}))
+(defonce BIND->NEWFN (atom {}))
+(defonce BIND->UIDSET (atom {}))
 
-(defn fast-iterate [col f]
-  (let [c (count col)]
-    (loop [i 0]
-      (when (< i c)
-        (f i (aget col i))
-        (recur (inc i))))))
+(defonce COMPOCOLS (atom {}))
+
+(defonce MANDATORY (atom []))
 
 (defonce UID (atom 0))
 
@@ -19,37 +22,21 @@
 
 (defn remove! [o k] (goog.object.remove o k))
 
-(defn log [x] (.log js/console x))
+(defn report [x] (.log js/console (str "%c cljs %c " x) "background: #bada55;" "background:white;"))
+
+(defn log [& x] (mapv #(.log js/console %) x))
 
 
-(defprotocol IThing
-  (init [o])
-  (update [o])
-  (destroy [o])
-  (serialize [o])
-  (deserialize [o m])
-  (copy [o])
-  (HTML [o]))
+(defn array-remove [o v]
+  (let [i (.indexOf o v)]
+    (when (not= -1 i) (.splice o i 1) true)))
 
-(def proto-map
-  {:init        #(init %)
-   :update      (fn ([] (__all__ update))([o] (__all__ update)))
-   :destroy     #(destroy %)
-   :serialize   #(serialize %)
-   :deserialize #(deserialize %1 %2)
-   :copy        #(copy %)
-   :HTML        #(HTML %)})
+(defn array-unique-add [o v]
+  (let [i (.indexOf o v)]
+    (if (= -1 i) (.push o v))))
 
 
-(defonce COMPOCOLS (atom {}))
 
-(defonce UID->OBJ (atom {}))
-
-(defonce BIND->UIDSET (atom {}))
-
-(defonce BIND->NEWFN (atom {}))
-
-(def NAME->UID (atom {}))
 
 (def __cache__ (atom []))
 (def __dirty__ #js {"uid_obj" false})
@@ -59,10 +46,6 @@
                (aset __dirty__ "uid_obj" true)
              )))
 
-
-
-
-
 (defn __all__ [f]
   (let [ff (fn [o] (f o) true)
         ss (if (aget __dirty__ "uid_obj")
@@ -70,6 +53,31 @@
                  (reset! __cache__ (to-array (vals @UID->OBJ))))
              @__cache__)]
     (.every ss ff)))
+
+
+(defprotocol IUid
+  (-uid [o])
+  (-o [o]))
+
+
+
+(defprotocol IThing
+  (init [o])
+  (update [o])
+  (destroy [o])
+  (serialize [o])
+  (deserialize [o m])
+  (HTML [o]))
+
+(def proto-map
+  {:init        #(init %)
+   :update      (fn ([] (__all__ update))([o] (__all__ update)))
+   :destroy     #(destroy %)
+   :serialize   #(serialize %)
+   :deserialize #(deserialize %1 %2)
+   :HTML        #(HTML %)})
+
+
 
 
 ;; from https://github.com/dribnet/mrhyde/blob/master/src/cljs/mrhyde/typepatcher.cljs
@@ -91,47 +99,70 @@
          (.defineProperty js/Object obj nam reusable-descriptor))))))
 
 
+
+
 (defn ->uid [o] (.-uid o))
 (defn ->o [uid] (get @UID->OBJ uid))
 (defn ->bind [o] (aget o "type"))
 
+
+
+
 (defn object-display [o]
   (let [ks ((aget js/window "locals") o)]
     (mapv (fn [k]
-             (if (= "_api_" k) ""
-               (str "<li> " k ":" (prn-str (aget o k)) "</li>"))
-              ) ks)))
+             (if (not (= "_api_" k))
+               (str "<object><li> " k ":"
+                (cond (fn? (aget o k)) (str "<function>" "fn" "</function>" )
+
+                 :else (prn-str (aget o k)))
+                "</li></object>") )) ks)))
 
 
+(defn fast-iterate [col f]
+  (let [c (count col)]
+    (loop [i 0]
+      (when (< i c)
+        (f i (aget col i))
+        (recur (inc i))))))
 
-;(time (do (js/Uint16Array. 100000000) true))
-;(time (do (js/Array. 100000000) true))
+
+(defn forget! [v]
+  "[& o] will remove uid'd object from all internal lookup maps"
+  (when-let [uid (-uid v)]
+    (when-let [n (aget v "name")]
+      (when-let [namearray (aget NAME->UID n)]
+        (array-remove namearray uid)))
+    (swap! UID->OBJ dissoc uid) uid))
+
+
 
 (extend-type default
   ICloneable
   (-clone [o]
    (let [o2 (js/____c o)]
      (dorun
-      (for [[k v] (seq o)]
-       (aset o2 k (-clone v)))) o2))
+      (for [k (js/locals o)]
+       (aset o2 k (-clone (aget o k))))) o2))
   ISeqable
   (-seq [o] (map #(list % (aget o %)) (.keys js/Object o)))
   ILookup
-  (-lookup [this k]
-    (-lookup this k nil))
-  (-lookup [this k not-found]
-    (let [v (aget this k)]
-      (or v not-found)))
+  (-lookup
+    ([this k]
+      (-lookup this k nil))
+    ([this k not-found]
+      (let [v (aget this k)]
+        (or v not-found))))
   IMapEntry
   (-key [o] (first o))
   (-val [o] (last o))
  IThing
   (init [me] ((get (get @COMPOCOLS (->bind me))  "init"  (fn [o])) me))
   (update [me] )
-  (destroy [me] ((get (get @COMPOCOLS (->bind me))  "destroy"  (fn [o])) me))
+  (destroy [me] (do ((get (get @COMPOCOLS (->bind me))  "destroy" (fn [o])) me)
+                  (forget! me)))
   (serialize [me] ((get (get @COMPOCOLS (->bind me))  "serialize" (fn [o])) me))
   (deserialize [me data] ((get (get @COMPOCOLS (->bind me))  "deserialize" (fn [a b] )) me))
-  (copy [me]  ((get (get @COMPOCOLS (->bind me))  "copy"  #()) me))
   (HTML [me] ((get (get @COMPOCOLS (->bind me))  "HTML"  #(apply str (object-display me))) me))
   )
 
@@ -170,14 +201,10 @@
   (destroy [me])
   (serialize [me])
   (deserialize [me data])
-  (copy [me] [me])
-  (HTML [me] " undefined ")
-  )
+  (HTML [me] " undefined "))
 
 
-(defprotocol IUid
-  (-uid [o])
-  (-o [o]))
+
 
 (extend-type number
   IUid
@@ -190,18 +217,15 @@
   (-o [o] o))
 
 (defn propagate [o f]
-  (mapv f (remove nil?
-           (map #(get @UID->OBJ %)
-            (concat
-              @(:components @o)@(:children @o) )))))
-
+  (.map (.map (:c @o) -o) f)
+  (.map (.map (:e @o) -o) f))
 
 
 
 
 (deftype Ent [data]
   Object
-  (toString [o] (str "E"))
+  (toString [o] (str "<E " (.-name o) ">"))
   IDeref
   (-deref [this] data)
   ISwap
@@ -211,9 +235,8 @@
   (-swap! [o f x y z] (aset o "data" (f data x y z)))
   IThing
      (init [o] (propagate o init))
-     (update [o] ;(propagate o update)
-      )
-     (destroy [o] (.-destroy o))
+     (update [o] )
+     (destroy [o] (propagate o destroy) (forget! o))
      (serialize [o] (propagate o serialize))
      (deserialize [o v] (propagate o deserialize))
      (HTML [o] (str "<entity><type>"(.-name o)"<uid>"(-uid o)"</uid></type>"
@@ -221,11 +244,16 @@
                                    (str "<type>" (.-type %)
                                         "<uid>" (-uid %) "</uid>" "</type>"
                                     (HTML %))
-                                   "</component>")
-                 (remove nil? (map #(get @UID->OBJ %) @(:components @o)))))
+                                   "</component>") (.-components o)))
                 "<children>"
-                (apply str (map HTML (remove nil? (map #(get @UID->OBJ %) @(:children @o)))))
+                (apply str (.map (.-children o) HTML))
                 "</children></entity>")))
+
+
+
+
+
+
 
 (deftype Comp [data]
   IDeref
@@ -238,7 +266,7 @@
 
 
 (def-api ChildAPI [o p]
-  "parent" {:doc " Returns the owning entity."
+  "owner" {:doc " Returns the owning entity."
             :get (fn [] p)})
 
 
@@ -246,35 +274,53 @@
   "uid" {:lock "uid"
          :doc "protected uid int"})
 
+
+
 (def-api EntityAPI [o]
   "type" {:get (fn [] "Entity")}
   "children" {:doc " Array of direct child entities."
-             :get (fn [] (aget (:children @o) "objects"))}
+             :get (fn [] (.map (:e @o) -o))}
   "components" {:doc " Array of components."
-          :get (fn [] (aget (:components @o) "objects"))}
+          :get (fn [] (.map (:c @o) -o))}
   "recur" {:doc " [f] applies f to all children and components."
-          :value (fn [f] (mapv #(.recur % f)
-                        (remove nil?
-                         (map #(get @UID->OBJ %) @(:children @o)))))}
+          :value (fn [f] )}
+  "remove"
+  {:doc " [o] unmounts a component or entity."
+   :value (fn [v] (if-let [uid (-uid v)]
+                    (if-let [obj (-o uid)]
+                      (if (instance? Ent obj)
+                        (when (array-remove (:e @o) uid)
+                          (ChildAPI obj nil))
+                        (if-let [comp-type (aget obj "type")]
+                          (when (array-remove (:c @o) uid)
+                            (ChildAPI obj nil)
+                            (destroy obj)
+                            (aset o comp-type (aget (.filter (:c @o) #(= (aget % "type") comp-type)) 0))))
+                        ))))}
   "add"
   {:doc " [o] mounts a component or entity."
-   :value (fn [v] (let [uid (-uid v)
-                        other   (or (-o v) v)]
-                     (let [typ (aget v "type")
-                           slot (or (get {"Entity" :children} typ) :components)]
-                      (.add (slot @o) uid)
-                      (ChildAPI other o)
-                      (when (= :components slot)
-                        (when-not (aget o typ)
-                          (aset o typ other) )))))}
+   :value (fn [v]
+            (if-let [uid (-uid v)]
+              (if-let [obj (-o uid)]
+                (if (instance? Ent obj)
+                  (when (array-unique-add (:e @o) uid)
+                    (ChildAPI obj o))
+                  (if-let [comp-type (aget obj "type")]
+                    (when (array-unique-add (:c @o) uid)
+                      (ChildAPI obj o)
+                      (when-not (aget o comp-type)
+                        (aset o comp-type obj))))))))}
+
+
 
   "destroy"
   {:doc " [] destroys this entity and all ancestor components and children."
-   :value (fn [] (prn (concat (aget (:children @o) "uids")
-                       (aget (:components @o) "uids")))
-            (aset (:children @o) "data" #{})
-            (aset (:components @o) "data" #{})
+   :value (fn []
+            (.remove (aget o "owner") o)
+            (destroy o)
+
             )})
+
 
 
 (def-api UIDsetAPI [o]
@@ -301,41 +347,50 @@
 (def-api FinderAPI [o]
   "find" {:doc "[string *boolean] globally finds entity or undefined (optional boolean true will return Array)"
           :value (fn [s & all]
-                   ((if (first all) to-array first)
-                               (map -o (remove nil? (get @NAME->UID s)))))})
-
+                   (when-let [named (aget NAME->UID s)]
+                     (if (first all)
+                       (.map named -o)
+                       (-o (aget named 0)))))})
 
 
 (defn E [tag & more]
-  (let [[nombre parts] (if (string? tag) [tag more] ["" (cons tag more)])
-        o (Ent.
-     {:components (UIDsetAPI (Ent. (set [])))
-      :children (UIDsetAPI (Ent. (set [])))})]
+  (let [[nombre parts] (if (string? tag) [tag more] ["" (remove nil? (cons tag more))])
+        o (Ent. {:e (js/Array.) :c (js/Array.)})]
     (let [uid (swap! UID inc)]
       (aset o "uid" uid)
       (aset o "name" nombre)
-      (swap! NAME->UID update-in [nombre] conj uid)
+      (when-let [named (or (aget NAME->UID nombre)
+                           (do (aset NAME->UID nombre (js/Array.))
+                               (aget NAME->UID nombre)))]
+        (array-unique-add named uid))
       (swap! UID->OBJ conj {uid o}))
 
   (EntityAPI (FinderAPI (UIDAPI o)))
+  (mapv #(.add o (%)) @MANDATORY)
   (mapv #(.add o %) parts)
   o))
 
 
-
-COMPOCOLS
-
 (defn C [bind data protocols]
   (let [valid-protocols
         (select-keys (js->clj protocols) (map clj->js (keys proto-map)))
+        _init (or (get valid-protocols "init") (fn [o]))
         _update (or (get valid-protocols "update") (fn [o]))
+        _HTML (or (get valid-protocols "HTML")
+               (fn [o] (apply str (object-display o))))
         structor
         (fn [o]
           (let [uid (swap! UID inc)
                 instance
                (specify o
+                ;Object
+                ;(toString [o] (str (str "type>" (.-type o) "<uid>" (-uid o) "</uid>" "</type")  ))
                 IThing
-                  (update [me] (_update me)))]
+                  (init [me] (_init me))
+                  (update [me] (_update me))
+                  (HTML [me] (_HTML me))
+
+                 )]
             (aset instance "uid" uid)
             (UIDAPI instance)
 
@@ -354,24 +409,8 @@ COMPOCOLS
     newfn))
 
 
-
-
-
-(defn -destroy [o]
-  (when-let [uid (.-_uid_ o)]
-    (swap! UID->OBJ dissoc uid)
-  (when-let [bind (.-_comp_ o)]
-    (swap! BIND->UIDSET update-in [bind] disj uid))
-    ))
-
-(defn uid-every [this f]
-  (let [c (.-length this)]
-    (loop [i 0]
-        (when (< i c)
-          (f (->o (aget this i)))
-          (recur (inc i))))))
-
-
+(defn add-mandatory [& c]
+  (swap! MANDATORY concat c))
 
 
 
@@ -381,15 +420,23 @@ COMPOCOLS
     (property-lock! E (clj->js k)))
   proto-map)
 
+(aset E "mandate" add-mandatory)
+
 (aset C "new" (js-obj))
 
 (when-not (.-C js/window )
   (aset js/window "C" C)
   (aset js/window "E" E))
 
+
+
+
+
+
+
 (defn inspect [e]
   (let [debug (or (.getElementById js/document "debug")
-                  (dom div {:id "debug" :style "float:right;white-space:pre;"}))]
+                  (dom div {:id "debug" :style "position:absolute;right:0px;top:0px;width:50%;white-space:pre;"}))]
     (aset debug "innerHTML" (HTML e))
     (.appendChild (.-body js/document) debug)))
 
@@ -398,3 +445,6 @@ COMPOCOLS
 (aset js/window "__all__" __all__)
 
 ((aget js/window "ec_hello"))
+
+
+
