@@ -13,22 +13,23 @@
 
 <script>
 
+    E.mandate(C.new.transform);
+
     C("actor",
       {name: ""},
       {init: function(c){
-          c.name = c.parent.name || "none";
-          c.parent.transform.position.x = Math.random() * 600;
-          c.parent.transform.position.y = Math.random() * 400; },
+          c.name = c.owner.name || "none";
+          c.owner.transform.position.x = Math.random() * 600;
+          c.owner.transform.position.y = Math.random() * 400; },
        update: function(c){}})
 
     C("wander", {speed:2},
       {update: function(c){
-          c.parent.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
-          c.parent.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
+          c.owner.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
+          c.owner.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
     makeActor = function(name){
         res = E(name,
-                C.new.transform(),
                 C.new.actor(),
                 C.new.sprite(),
                 C.new.wander() );

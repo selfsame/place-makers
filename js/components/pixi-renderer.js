@@ -32,7 +32,6 @@ C("sprite",{
 
   {init:
    function(c){
-     console.log(c.type, c.owner.transform.parent);
      c.texture = PIXI.Texture.fromImage(c.image);
      c.instance = new PIXI.Sprite(c.texture);
      root.pixi.stage.addChild(c.instance);
@@ -46,6 +45,6 @@ C("sprite",{
    },
    destroy:
    function(c){
-     c.instance.owner.removeChild(c.instance);
+     c.instance.parent.removeChild(c.instance);
    }
   });

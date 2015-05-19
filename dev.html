@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:50747/socket.io/lighttable/ws.js'></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src="js/cljs/dev.js"></script>
@@ -13,6 +13,9 @@
 	<body>
         <script type="text/javascript" src="js/Constants.js"></script>
 <script>
+
+    E.mandate(C.new.transform);
+
     C("clock", new Date(),
       {HTML:function(c){
           return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
@@ -41,7 +44,6 @@
 
     makeActor = function(name){
         res = E(name,
-                C.new.transform(),
                 C.new.actor(),
                 C.new.sprite(),
                 C.new.wander() );
@@ -52,22 +54,19 @@
 
     root =
         E("game",
-          C.new.transform(),
           C.new.pixi(),
-
           C.new.loop(),
-
           E( "people",
-            C.new.transform(),
               makeActor("Joe"),
               makeActor("Dalton"),
               makeActor("Samwise")));
     holder = root.find("people");
-    for (i = 0;i<6;i++){
+    for (i = 0;i<2000;i++){
         holder.add(makeActor("anon"));
     }
 
     window.onload = function(e){
+        console.log("window.onload");
         E.init(root);
         //window.inspect(root);
     };
