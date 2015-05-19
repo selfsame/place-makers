@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:50747/socket.io/lighttable/ws.js'></script>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src="js/cljs/dev.js"></script>
@@ -17,15 +17,15 @@
       {HTML:function(c){
           return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
 
-    C("S", PIXI.Sprite,
+    C("S", new PIXI.Sprite,
       {})
 
     C("actor",
       {name: ""},
       {init: function(c){
-          c.name = c.parent.name || "none";
-          c.parent.transform.position.x = Math.random() * 600;
-          c.parent.transform.position.y = Math.random() * 400;
+          c.name = c.owner.name || "none";
+          c.owner.transform.position.x = Math.random() * 600;
+          c.owner.transform.position.y = Math.random() * 400;
       },
        update: function(c){
 
@@ -35,8 +35,8 @@
     C("wander", {speed:2},
       {update: function(c){
 
-          c.parent.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
-          c.parent.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
+          c.owner.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
+          c.owner.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
 
     makeActor = function(name){
@@ -52,21 +52,22 @@
 
     root =
         E("game",
-          C.new.clock(),
+          C.new.transform(),
           C.new.pixi(),
+
           C.new.loop(),
 
           E( "people",
+            C.new.transform(),
               makeActor("Joe"),
               makeActor("Dalton"),
               makeActor("Samwise")));
     holder = root.find("people");
-    for (i = 0;i<6000;i++){
+    for (i = 0;i<6;i++){
         holder.add(makeActor("anon"));
     }
 
     window.onload = function(e){
-        console.log("ready");
         E.init(root);
         //window.inspect(root);
     };

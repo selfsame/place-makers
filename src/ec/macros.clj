@@ -45,7 +45,7 @@
        (fn ~args
          ~@code
          (~'aset ~o "_api_" (str (~'aget ~o "_api_") ~api))
-         (~'install-js-hidden-get-prop ~o "API" #(~'.log ~'js/console (~'aget ~o "_api_")))
+         (~'install-js-hidden-get-prop ~o "API" #(~'report (~'aget ~o "_api_")))
          ~o))))
 
 

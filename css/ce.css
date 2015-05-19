@@ -50,3 +50,11 @@ type{
   height: 1.2em;
   margin: 0px;
   background-color: #FF0;}
+
+function{background-color:black; color:magenta;
+}
+
+
+object type{
+border:0px;
+padding:1px;}

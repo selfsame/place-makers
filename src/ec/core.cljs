@@ -1,17 +1,18 @@
 (ns ec.core
+
   (:require-macros
    [ec.macros :refer [dom gentype def-api]]))
 
 (enable-console-print!)
 
+(def NAME->UID (atom {}))
+(defonce UID->OBJ (atom {}))
+(defonce BIND->NEWFN (atom {}))
+(defonce BIND->UIDSET (atom {}))
+
+(defonce COMPOCOLS (atom {}))
 
 
-(defn fast-iterate [col f]
-  (let [c (count col)]
-    (loop [i 0]
-      (when (< i c)
-        (f i (aget col i))
-        (recur (inc i))))))
 
 (defonce UID (atom 0))
 
@@ -19,7 +20,31 @@
 
 (defn remove! [o k] (goog.object.remove o k))
 
-(defn log [x] (.log js/console x))
+(defn report [x] (.log js/console (str "%c cljs %c " x) "background: #bada55;" "background:white;"))
+
+(defn log [& x] (mapv #(.log js/console %) x))
+
+
+
+(def __cache__ (atom []))
+(def __dirty__ #js {"uid_obj" false})
+(add-watch UID->OBJ :change
+           (fn [k r os ns]
+             (if-not (.-uid_obj __dirty__)
+               (aset __dirty__ "uid_obj" true)
+             )))
+
+(defn __all__ [f]
+  (let [ff (fn [o] (f o) true)
+        ss (if (aget __dirty__ "uid_obj")
+             (do (aset __dirty__ "uid_obj" false)
+                 (reset! __cache__ (to-array (vals @UID->OBJ))))
+             @__cache__)]
+    (.every ss ff)))
+
+
+
+
 
 
 (defprotocol IThing
@@ -41,35 +66,6 @@
    :HTML        #(HTML %)})
 
 
-(defonce COMPOCOLS (atom {}))
-
-(defonce UID->OBJ (atom {}))
-
-(defonce BIND->UIDSET (atom {}))
-
-(defonce BIND->NEWFN (atom {}))
-
-(def NAME->UID (atom {}))
-
-(def __cache__ (atom []))
-(def __dirty__ #js {"uid_obj" false})
-(add-watch UID->OBJ :change
-           (fn [k r os ns]
-             (if-not (.-uid_obj __dirty__)
-               (aset __dirty__ "uid_obj" true)
-             )))
-
-
-
-
-
-(defn __all__ [f]
-  (let [ff (fn [o] (f o) true)
-        ss (if (aget __dirty__ "uid_obj")
-             (do (aset __dirty__ "uid_obj" false)
-                 (reset! __cache__ (to-array (vals @UID->OBJ))))
-             @__cache__)]
-    (.every ss ff)))
 
 
 ;; from https://github.com/dribnet/mrhyde/blob/master/src/cljs/mrhyde/typepatcher.cljs
@@ -91,21 +87,34 @@
          (.defineProperty js/Object obj nam reusable-descriptor))))))
 
 
+
+
 (defn ->uid [o] (.-uid o))
 (defn ->o [uid] (get @UID->OBJ uid))
 (defn ->bind [o] (aget o "type"))
 
+
+
+
 (defn object-display [o]
   (let [ks ((aget js/window "locals") o)]
     (mapv (fn [k]
-             (if (= "_api_" k) ""
-               (str "<li> " k ":" (prn-str (aget o k)) "</li>"))
-              ) ks)))
+             (if (not (= "_api_" k))
+               (str "<object><li> " k ":"
+                (cond (fn? (aget o k)) (str "<function>" "fn" "</function>" )
+
+                 :else (prn-str (aget o k)))
+                "</li></object>") )) ks)))
 
 
+(defn fast-iterate [col f]
+  (let [c (count col)]
+    (loop [i 0]
+      (when (< i c)
+        (f i (aget col i))
+        (recur (inc i))))))
 
-;(time (do (js/Uint16Array. 100000000) true))
-;(time (do (js/Array. 100000000) true))
+
 
 (extend-type default
   ICloneable
@@ -117,11 +126,12 @@
   ISeqable
   (-seq [o] (map #(list % (aget o %)) (.keys js/Object o)))
   ILookup
-  (-lookup [this k]
-    (-lookup this k nil))
-  (-lookup [this k not-found]
-    (let [v (aget this k)]
-      (or v not-found)))
+  (-lookup
+    ([this k]
+      (-lookup this k nil))
+    ([this k not-found]
+      (let [v (aget this k)]
+        (or v not-found))))
   IMapEntry
   (-key [o] (first o))
   (-val [o] (last o))
@@ -171,8 +181,7 @@
   (serialize [me])
   (deserialize [me data])
   (copy [me] [me])
-  (HTML [me] " undefined ")
-  )
+  (HTML [me] " undefined "))
 
 
 (defprotocol IUid
@@ -198,10 +207,9 @@
 
 
 
-
 (deftype Ent [data]
   Object
-  (toString [o] (str "E"))
+  (toString [o] (str "<E " (.-name o) ">"))
   IDeref
   (-deref [this] data)
   ISwap
@@ -238,7 +246,7 @@
 
 
 (def-api ChildAPI [o p]
-  "parent" {:doc " Returns the owning entity."
+  "owner" {:doc " Returns the owning entity."
             :get (fn [] p)})
 
 
@@ -270,11 +278,15 @@
 
   "destroy"
   {:doc " [] destroys this entity and all ancestor components and children."
-   :value (fn [] (prn (concat (aget (:children @o) "uids")
-                       (aget (:components @o) "uids")))
+   :value (fn [] (let [uids (concat (aget (:components @o) "uids")
+                                          (aget (:children @o) "uids"))]
+                   (swap! UID->OBJ #(apply dissoc (cons % uids)))
+                   (vec (map destroy (remove nil? (map -o ))))
+
+
             (aset (:children @o) "data" #{})
             (aset (:components @o) "data" #{})
-            )})
+            ))})
 
 
 (def-api UIDsetAPI [o]
@@ -306,6 +318,10 @@
 
 
 
+
+
+
+
 (defn E [tag & more]
   (let [[nombre parts] (if (string? tag) [tag more] ["" (cons tag more)])
         o (Ent.
@@ -318,24 +334,33 @@
       (swap! UID->OBJ conj {uid o}))
 
   (EntityAPI (FinderAPI (UIDAPI o)))
+
   (mapv #(.add o %) parts)
   o))
 
+;;
+ ;;
 
-
-COMPOCOLS
 
 (defn C [bind data protocols]
   (let [valid-protocols
         (select-keys (js->clj protocols) (map clj->js (keys proto-map)))
         _update (or (get valid-protocols "update") (fn [o]))
+        _HTML (or (get valid-protocols "HTML")
+               (fn [o]
+                        (apply str (object-display o))))
         structor
         (fn [o]
           (let [uid (swap! UID inc)
                 instance
                (specify o
+                ;Object
+                ;(toString [o] (str (str "type>" (.-type o) "<uid>" (-uid o) "</uid>" "</type")  ))
                 IThing
-                  (update [me] (_update me)))]
+                  (update [me] (_update me))
+                (HTML [me] (_HTML me))
+
+                 )]
             (aset instance "uid" uid)
             (UIDAPI instance)
 
@@ -357,23 +382,6 @@ COMPOCOLS
 
 
 
-(defn -destroy [o]
-  (when-let [uid (.-_uid_ o)]
-    (swap! UID->OBJ dissoc uid)
-  (when-let [bind (.-_comp_ o)]
-    (swap! BIND->UIDSET update-in [bind] disj uid))
-    ))
-
-(defn uid-every [this f]
-  (let [c (.-length this)]
-    (loop [i 0]
-        (when (< i c)
-          (f (->o (aget this i)))
-          (recur (inc i))))))
-
-
-
-
 
 (mapv
   (fn [[k v]]
@@ -387,9 +395,15 @@ COMPOCOLS
   (aset js/window "C" C)
   (aset js/window "E" E))
 
+
+
+
+
+
+
 (defn inspect [e]
   (let [debug (or (.getElementById js/document "debug")
-                  (dom div {:id "debug" :style "float:right;white-space:pre;"}))]
+                  (dom div {:id "debug" :style "position:absolute;right:0px;top:0px;width:50%;white-space:pre;"}))]
     (aset debug "innerHTML" (HTML e))
     (.appendChild (.-body js/document) debug)))
 
@@ -398,3 +412,19 @@ COMPOCOLS
 (aset js/window "__all__" __all__)
 
 ((aget js/window "ec_hello"))
+
+
+(deftype Transform [position scale rotation])
+
+(def-api TransformAPI [o]
+  "parent" {:doc " Returns the parent Transform."
+            :value (fn [] "?")})
+
+
+
+
+(C "transform"
+             (Transform. #js {:x 0 :y 0} #js {:x 0 :y 0} 0)
+ {"init" #(prn "cljs init " %)})
+
+
