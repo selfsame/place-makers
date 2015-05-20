@@ -1,4 +1,9 @@
 out/
 dev.html
+joe.html
 js/cljs/dev.js
 *.jar
+
+build.bat
+prod.bat
+
