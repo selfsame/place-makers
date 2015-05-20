@@ -80,7 +80,6 @@ C('movie', {
     }
 
     c.instance = new PIXI.extras.MovieClip(c.frames);
-    console.log(c.instance);
     c.instance.anchor.set(c.anchor);
     c.instance.animationSpeed = c.animationSpeed;
     root.pixi.stage.addChild(c.instance);
