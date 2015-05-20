@@ -1,11 +1,12 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:50747/socket.io/lighttable/ws.js'></script>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src="js/cljs/dev.js"></script>
     <script type="text/javascript" src="js/components/standard.js"></script>
     <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
+    <script type="text/javascript" src="js/components/joegrid.js"></script>
 
     <link href="css/ce.css" type="text/css" rel="stylesheet">
 
@@ -16,12 +17,6 @@
 
     E.mandate(C.new.transform);
 
-    C("clock", new Date(),
-      {HTML:function(c){
-          return "<p>"+c.toString().split(" ").join("</p><p>")+"</p>"}})
-
-    C("S", new PIXI.Sprite,
-      {})
 
     C("actor",
       {name: ""},
@@ -43,27 +38,25 @@
 
 
     makeActor = function(name){
-        res = E(name,
+        return E(name,
                 C.new.actor(),
-                C.new.sprite(),
+                C.new.sprite({image: "assets/sprites/objects/alphasquare.png"}),
                 C.new.wander() );
+    }
 
+    map = E("map",
+            C.new.grid(),
+            C.new.background())
 
-        res.sprite.image = "assets/sprites/objects/alphasquare.png";
-        return res;}
 
     root =
         E("game",
           C.new.pixi(),
-          C.new.loop(),
-          E( "people",
-              makeActor("Joe"),
-              makeActor("Dalton"),
-              makeActor("Samwise")));
-    holder = root.find("people");
-    for (i = 0;i<2000;i++){
-        holder.add(makeActor("anon"));
-    }
+          C.new.loop());
+
+    root.add(map);
+
+
 
     window.onload = function(e){
         console.log("window.onload");
