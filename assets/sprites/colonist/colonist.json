@@ -1,0 +1,94 @@
+{
+  "frames": {
+    "colonist.walk.0000.png": {
+      "frame": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0001.png": {
+      "frame": {"x": 32, "y": 0, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0002.png": {
+      "frame": {"x": 64, "y": 0, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0003.png": {
+      "frame": {"x": 96, "y": 0, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0004.png": {
+      "frame": {"x": 0, "y": 32, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0005.png": {
+      "frame": {"x": 32, "y": 32, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0006.png": {
+      "frame": {"x": 64, "y": 32, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0007.png": {
+      "frame": {"x": 96, "y": 32, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0008.png": {
+      "frame": {"x": 0, "y": 64, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0009.png": {
+      "frame": {"x": 32, "y": 64, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0010.png": {
+      "frame": {"x": 64, "y": 64, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    },
+    "colonist.walk.0011.png": {
+      "frame": {"x": 96, "y": 64, "w": 32, "h": 32},
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {"x": 0, "y": 0, "w": 32, "h": 32},
+      "sourceSize": {"w":32, "h": 32}
+    }
+  },
+  "meta": {
+    "image": "colonist_bare_2_walk.png",
+    "size": {"w": 128, "h": 96},
+    "format": "RGBA8888",
+    "scale": "1"
+  }
+}

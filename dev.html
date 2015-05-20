@@ -1,9 +1,8 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/required.js"></script>
-    <script type="text/javascript" src="js/cljs/dev.js"></script>
+    <script type="text/javascript" src="js/cljs/main.js"></script>
     <script type="text/javascript" src="js/components/standard.js"></script>
     <script type="text/javascript" src="js/components/pixi-renderer.js"></script>
     <script type="text/javascript" src="js/components/joegrid.js"></script>
@@ -32,7 +31,7 @@
 
     C("wander", {speed:2},
       {update: function(c){
-
+          c.owner.transform.rotation += Math.random() * 0.01;
           c.owner.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
           c.owner.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
@@ -40,7 +39,11 @@
     makeActor = function(name){
         return E(name,
                 C.new.actor(),
-                C.new.sprite({image: "assets/sprites/objects/alphasquare.png"}),
+                C.new.movie({
+                  frameName: "colonist.walk",
+                  animationSpeed: .2,
+                  frameCount: 12
+                }),
                 C.new.wander() );
     }
 
@@ -51,6 +54,8 @@
 
     root =
         E("game",
+          makeActor('ddmills'),
+          makeActor('jplur'),
           C.new.pixi(),
           C.new.loop());
 
@@ -58,9 +63,14 @@
 
 
 
+    PIXI.loader
+    .add('assets/sprites/objects/alphasquare.png')
+    .add('assets/sprites/colonist/colonist.json')
+    .load(function(){
+      E.init(root);
+    });
+
     window.onload = function(e){
-        console.log("window.onload");
-        E.init(root);
         //window.inspect(root);
     };
 
