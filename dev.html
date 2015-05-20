@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:50747/socket.io/lighttable/ws.js'></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src="js/cljs/dev.js"></script>
@@ -17,32 +17,31 @@
 
     E.mandate(C.new.transform);
 
-C("background",
-  {instance:false,
-   source: false,
-   cached: false},
-  {init: function(c){
-    c.instance = new PIXI.ParticleContainer;
-    c.source = c.owner.grid;
-    c.source.mapindexed(function(i, x, y){
-      c.source.data[i] = parseInt(Math.random()*10)});
-  },
-   update: function(c){
-     if (c.cached == false){
-       c.source.mapindexed(function(i, x, y){
+    C("background",
+      {instance:false,
+       source: false,
+       cached: false},
 
-         tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[i] + 25));
-         tile.position.x = x * 32;
-         tile.position.y = y * 32;
-         c.instance.addChild(tile);
-       });
-       c.cached = true;
-     } else {
+      {init: function(c){
+          c.instance = new PIXI.ParticleContainer;
+          c.source = c.owner.grid;
+          c.source.mapindexed(function(i, x, y){
+              c.source.data[i] = parseInt(Math.random()*10)});
+      },
 
-       root.pixi.renderer.render(c.instance);
+       mount: function(c){
+           c.source.mapindexed(function(i, x, y){
+               tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[i] + 25));
+               tile.position.x = x * 32;
+               tile.position.y = y * 32;
+               c.instance.addChild(tile);
+           })
+       },
 
-     }
-   }});
+       update: function(c){
+           root.pixi.renderer.render(c.instance);
+       }
+      });
 
 
     C("actor",
@@ -58,35 +57,44 @@ C("background",
           c.owner.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
           c.owner.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
+    C("protoreport", {},
+      {init: function(c){console.log(c.owner + " init");},
+       mount: function(c){console.log(c.owner + " mount");},
+       unmount: function(c){console.log(c.owner + " unmount");},
+       destroy: function(c){console.log(c.owner + " destroy");}})
 
     makeActor = function(name){
         return E(name,
                 C.new.actor(),
                 C.new.sprite({image: "assets/sprites/objects/alphasquare.png"}),
-                C.new.wander() );
+                C.new.wander(),
+                C.new.protoreport());
     }
 
     map = E("map",
             C.new.grid({width:200,height:160}),
-            C.new.background())
-
+            C.new.background(),
+            C.new.protoreport())
 
     root =
         E("game",
-          C.new.pixi({width:2000,height:1600}),
-          C.new.loop());
+          C.new.pixi({width:1400,height:900}),
+          C.new.loop(),
+          C.new.protoreport());
 
     root.add(map);
 
     root.add(E("people",
-               makeActor()));
+               makeActor("Joe"),
+               C.new.protoreport()));
 
     PIXI.loader
       .add('assets/atlas.png')
       .add('assets/atlas.json')
       .load(function(){
         console.log("assets loaded");
-        E.init(root);
+
+        E.mount(root);
       });
 
 
