@@ -3,24 +3,19 @@ C("pixi",
   { renderer: false,
     stage:false,
     width:640,
-    height:480,
-   ready: false},
+    height:480},
 
   { init:
     function(c){
       c.renderer = PIXI.autoDetectRenderer(c.width, c.height);
       document.body.appendChild(c.renderer.view);
       c.stage = new PIXI.Container;
-      PIXI.loader
-      .add('assets/sprites/objects/alphasquare.png')
-      .load(function(){c.ready = true;});
     },
     update:
     function(c){
 
-      if (c.ready){
 
-        c.renderer.render(c.stage); }
+        c.renderer.render(c.stage);
     }
   });
 
@@ -69,3 +64,31 @@ C("sprite",{
      c.instance.parent.removeChild(c.instance);
    }
   });
+
+C('movie', {
+  frames: [],
+  animationSpeed: .5,
+  anchor: .5,
+  frameCount: 1,
+  frameName: '',
+  paused: false
+}, {
+  init: function(c) {
+    for (var i = 0; i < c.frameCount; i++) {
+      var f = ('0000' + i).substr(-4);
+      c.frames.push(PIXI.Texture.fromFrame(c.frameName + '.' + f + '.png'));
+    }
+
+    c.instance = new PIXI.extras.MovieClip(c.frames);
+    c.instance.anchor.set(c.anchor);
+    c.instance.animationSpeed = c.animationSpeed;
+    root.pixi.stage.addChild(c.instance);
+  },
+  update: function(c) {
+    c.instance.rotation = c.owner.transform.rotation;
+    c.instance.x = c.owner.transform.position.x;
+    c.instance.y = c.owner.transform.position.y;
+    c.instance.play();
+
+  }
+});
