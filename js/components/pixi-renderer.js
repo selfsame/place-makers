@@ -31,6 +31,9 @@ C("sprite",{
    function(c){
      c.texture = PIXI.Texture.fromImage(c.image);
      c.instance = new PIXI.Sprite(c.texture);
+   },
+   mount:
+   function(c){
      root.pixi.stage.addChild(c.instance);
    },
    update:
@@ -38,9 +41,8 @@ C("sprite",{
      c.instance.rotation += Math.random() * 0.01;
      c.instance.x = c.owner.transform.position.x;
      c.instance.y = c.owner.transform.position.y;
-
    },
-   destroy:
+   unmount:
    function(c){
      c.instance.parent.removeChild(c.instance);
    }
