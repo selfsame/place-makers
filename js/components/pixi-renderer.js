@@ -25,6 +25,27 @@ C("pixi",
   });
 
 
+C("background",
+  {instance:false,
+   source: false,
+   cached: false},
+  {init: function(c){
+    c.instance = new PIXI.ParticleContainer;
+    c.source = c.owner.grid
+  },
+   update: function(c){
+     if (c.cached){
+      root.pixi.renderer.render(c.instance);
+     } else {
+       source.mapindexed(function(i, x, y){
+         source.data[i] = parseInt(Math.random()*10)});
+       c.cached = "?";
+
+     }
+   }});
+
+
+
 C("sprite",{
   image: "",
   texture: false,

@@ -402,7 +402,12 @@
             (swap! BIND->UIDSET update-in [bind] #(conj (or % #{}) uid))
 
             instance))
-        newfn (fn [] (structor data))]
+        newfn (fn [& more]
+                (let [o (structor data)
+                      opts (first more)]
+                  (if opts
+                    (do (.map (js/locals opts) #(aset o % (aget opts %))) o)
+                    o)))]
     (swap! COMPOCOLS conj {bind valid-protocols})
     (swap! BIND->NEWFN conj {bind newfn})
     (aset (aget js/C "new") bind newfn)
