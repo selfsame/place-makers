@@ -4,6 +4,6 @@ joe.html
 js/cljs/dev.js
 *.jar
 
-cljs-build.bat
-cljs-prod.bat
+build.bat
+prod.bat
 
