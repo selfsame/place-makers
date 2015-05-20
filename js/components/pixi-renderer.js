@@ -2,47 +2,23 @@
 C("pixi",
   { renderer: false,
     stage:false,
-    width:640,
-    height:480,
-   ready: false},
+    width:1500,
+    height:900},
 
   { init:
     function(c){
       c.renderer = PIXI.autoDetectRenderer(c.width, c.height);
       document.body.appendChild(c.renderer.view);
       c.stage = new PIXI.Container;
-      PIXI.loader
-      .add('assets/sprites/objects/alphasquare.png')
-      .load(function(){c.ready = true;});
     },
     update:
     function(c){
-
-      if (c.ready){
-
-        c.renderer.render(c.stage); }
+        //c.renderer.render(c.stage);
     }
+
   });
 
 
-C("background",
-  {instance:false,
-   source: false,
-   cached: false},
-  {init: function(c){
-    c.instance = new PIXI.ParticleContainer;
-    c.source = c.owner.grid
-  },
-   update: function(c){
-     if (c.cached){
-      root.pixi.renderer.render(c.instance);
-     } else {
-       source.mapindexed(function(i, x, y){
-         source.data[i] = parseInt(Math.random()*10)});
-       c.cached = "?";
-
-     }
-   }});
 
 
 

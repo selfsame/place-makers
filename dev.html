@@ -17,22 +17,44 @@
 
     E.mandate(C.new.transform);
 
+C("background",
+  {instance:false,
+   source: false,
+   cached: false},
+  {init: function(c){
+    c.instance = new PIXI.ParticleContainer;
+    c.source = c.owner.grid;
+    c.source.mapindexed(function(i, x, y){
+      c.source.data[i] = parseInt(Math.random()*10)});
+  },
+   update: function(c){
+     if (c.cached == false){
+       c.source.mapindexed(function(i, x, y){
+
+         tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[i] + 25));
+         tile.position.x = x * 32;
+         tile.position.y = y * 32;
+         c.instance.addChild(tile);
+       });
+       c.cached = true;
+     } else {
+
+       root.pixi.renderer.render(c.instance);
+
+     }
+   }});
+
 
     C("actor",
       {name: ""},
       {init: function(c){
           c.name = c.owner.name || "none";
           c.owner.transform.position.x = Math.random() * 600;
-          c.owner.transform.position.y = Math.random() * 400;
-      },
-       update: function(c){
-
-       }})
+          c.owner.transform.position.y = Math.random() * 400;}})
 
 
     C("wander", {speed:2},
       {update: function(c){
-
           c.owner.transform.position.x += Math.random() * c.speed - 0.5 * c.speed;
           c.owner.transform.position.y += Math.random() * c.speed - 0.5 * c.speed; }});
 
@@ -45,24 +67,28 @@
     }
 
     map = E("map",
-            C.new.grid(),
+            C.new.grid({width:200,height:160}),
             C.new.background())
 
 
     root =
         E("game",
-          C.new.pixi(),
+          C.new.pixi({width:2000,height:1600}),
           C.new.loop());
 
     root.add(map);
 
+    root.add(E("people",
+               makeActor()));
 
-
-    window.onload = function(e){
-        console.log("window.onload");
+    PIXI.loader
+      .add('assets/atlas.png')
+      .add('assets/atlas.json')
+      .load(function(){
+        console.log("assets loaded");
         E.init(root);
-        //window.inspect(root);
-    };
+      });
+
 
 
 

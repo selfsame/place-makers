@@ -438,7 +438,6 @@
 
 
 
-
 (defn inspect [e]
   (let [debug (or (.getElementById js/document "debug")
                   (dom div {:id "debug" :style "position:absolute;right:0px;top:0px;width:50%;white-space:pre;"}))]
