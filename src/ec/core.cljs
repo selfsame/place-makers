@@ -147,7 +147,7 @@
   (destroy [o])
   (serialize [o])
   (deserialize [o data])
-  (HTML [o] (apply str (object-display o))))
+  (HTML [o] (str (object-display o))))
 
 
 (extend-type array
@@ -260,8 +260,8 @@
 
 
 (def-api EntityAPI [o]
-  "type" {:get (fn [] "Entity")}
-  "mounted" {:value false}
+  "type" {:doc "always 'Entity'" :get (fn [] "Entity")}
+  "mounted" {:doc "don't touch" :value false}
   "children" {:doc " Array of direct child entities."
              :get (fn [] (.map (:e @o) -o))}
   "components" {:doc " Array of components."
@@ -304,7 +304,7 @@
 
 
 (def-api ComponentAPI [o bind]
-  "type" {:get (fn [] bind)})
+  "type" {:doc "the component type string" :get (fn [] bind)})
 
 
 (def-api FinderAPI [o]
@@ -342,7 +342,7 @@
   (EntityAPI (FinderAPI (UIDAPI o)))
   (mapv #(.add o (%)) @MANDATORY)
   (mapv #(.add o %) parts)
-  (mapv init parts)
+
   o))
 
 
@@ -381,9 +381,9 @@
         newfn (fn [& more]
                 (let [o (structor data)
                       opts (first more)]
-                  (if opts
-                    (do (.map (js/locals opts) #(aset o % (aget opts %))) o)
-                    o)))]
+                  (if opts (.map (js/locals opts) #(aset o % (aget opts %))))
+                  (init o)
+                   o)) ]
     (swap! COMPOCOLS conj {bind valid-protocols})
     (swap! BIND->NEWFN conj {bind newfn})
     (aset (aget js/C "new") bind newfn)
