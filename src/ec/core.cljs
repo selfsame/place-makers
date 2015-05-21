@@ -175,6 +175,9 @@
   (-clone [o] (.valueOf o)))
 
 (extend-type nil
+  IUid
+  (-uid [o] nil)
+  (-o [o] nil)
   ICloneable
   (-clone [o] nil)
  IThing
@@ -333,11 +336,10 @@
     (let [uid (swap! UID inc)]
       (aset o "uid" uid)
       (aset o "name" nombre)
-      (comment
         (when-let [named (or (aget NAME->UID nombre)
                            (do (aset NAME->UID nombre (js/Array.))
                                (aget NAME->UID nombre)))]
-        (array-unique-add named uid)))
+        (array-unique-add named uid))
       (swap! UID->OBJ conj {uid o}))
   (EntityAPI (FinderAPI (UIDAPI o)))
   (mapv #(.add o (%)) @MANDATORY)
