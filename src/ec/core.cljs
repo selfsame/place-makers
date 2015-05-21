@@ -95,13 +95,13 @@
 
 (defn object-display [o]
   (let [ks ((aget js/window "locals") o)]
-    (mapv (fn [k]
+    (.map ks (fn [k]
              (if (not (= "_api_" k))
                (str "<object><li> " k ":"
                 (cond (fn? (aget o k)) (str "<function>" "fn" "</function>" )
 
                  :else (prn-str (aget o k)))
-                "</li></object>") )) ks)))
+                "</li></object>") )))))
 
 
 (defn fast-iterate [col f]
@@ -236,14 +236,14 @@
        (forget! o))
      (serialize [o] (propagate o serialize))
      (deserialize [o v] (propagate o deserialize))
-     (HTML [o] (str "<entity><type>"(.-name o)"<uid>"(-uid o)"</uid></type>"
+     (HTML [o] (str "<entity><type>"(aget o "name")"<uid>"(-uid o)"</uid></type>"
                 (apply str (mapv #(str "<component>"
-                                   (str "<type>" (.-type %)
+                                   (str "<type>" (aget % "type")
                                         "<uid>" (-uid %) "</uid>" "</type>"
                                     (HTML %))
-                                   "</component>") (.-components o)))
+                                   "</component>") (aget o "components")))
                 "<children>"
-                (apply str (.map (.-children o) HTML))
+                (apply str (.map (aget o "children") HTML))
                 "</children></entity>")))
 
 
@@ -322,10 +322,16 @@
                            (.apply (.-concat here) here
                                    (.map (.map (:e @o) -o) #(.findComponents % s)))))}
   "findAncestorComponents" {:doc "[string] returns Array of found components attached to this entity."
-          :value (fn [s] (let [here (.filter (.map (:c @o) -o) #(= (.-type %) s))]
-                           (if (.-owner o)
-                               (.concat here (.findAncestorComponents (.-owner o) s))
-                               here)))})
+          :value (fn [s]
+                   (if-not (aget o "owner")  (js/Array.)
+                     (loop [obj (aget o "owner")
+                            res  (js/Array.)]
+                       (let [found (.concat res (.filter
+                                               (.map (:c @obj) -o)
+                                              #(= (aget % "type") s)))]
+                       (if-not (aget obj "owner") found
+                         (recur (aget obj "owner")
+                                found))))))})
 
 
 
