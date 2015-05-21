@@ -46,11 +46,11 @@
 
 
     C("actor",
-      {name: ""},
-      {init: function(c){
-          c.name = c.owner.name || "none";
-          c.owner.transform.position.x = Math.random() * 600;
-          c.owner.transform.position.y = Math.random() * 400;}})
+      {},
+      {mount: function(c){
+          pixi = c.owner.findAncestorComponents("pixi");
+          c.owner.transform.position.x = Math.random() * pixi.width;
+          c.owner.transform.position.y = Math.random() * pixi.height;}})
 
 
     C("wander", {speed:2},
