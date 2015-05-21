@@ -6,7 +6,7 @@ C('movie', {
   frameName: '',
   paused: false
 }, {
-  init: function(c) {
+  mount: function(c) {
     for (var i = 0; i < c.frameCount; i++) {
       var f = ('0000' + i).substr(-4);
       c.frames.push(PIXI.Texture.fromFrame(c.frameName + '.' + f + '.png'));
