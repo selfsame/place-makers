@@ -4,12 +4,15 @@
 	<script type="text/javascript" src="js/required.js"></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src="js/cljs/main.js"></script>
+
     <script type="text/javascript" src="js/components/standard.js"></script>
     <script type="text/javascript" src="js/components/pixi/pixi.js"></script>
     <script type="text/javascript" src="js/components/pixi/sprite.js"></script>
     <script type="text/javascript" src="js/components/pixi/movie.js"></script>
-		<script type="text/javascript" src="js/components/pixi/container.js"></script>
+	<script type="text/javascript" src="js/components/pixi/container.js"></script>
     <script type="text/javascript" src="js/components/joegrid.js"></script>
+    <script type="text/javascript" src="js/components/grid-graphics.js"></script>
+
 
     <link href="css/ce.css" type="text/css" rel="stylesheet">
 </head>
@@ -19,31 +22,37 @@
 
     E.mandate(C.new.transform);
 
-    C("background",
-      {instance:false,
-       source: false,
-       cached: false},
+   C("background",
+      {source: false,
+       cached: false,
+       o:5},
 
       {init: function(c){
-          c.instance = new PIXI.ParticleContainer;
+
       },
 
        mount: function(c){
            c.source = c.owner.grid;
+
            c.source.mapindexed(function(i, x, y){
-              c.source.data[i] = parseInt(Math.random()*10)
-           });
-           c.source.mapindexed(function(i, x, y){
-               tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[i] + 25));
-               tile.position.x = x * 32;
-               tile.position.y = y * 32;
-               c.instance.addChild(tile);
-           })
-       },
-       update: function(c){
-           root.pixi.renderer.render(c.instance);
+               c.source.data[i] = parseInt(Math.random()*15)});
+           c.owner.container.alpha = 0.5
+           c.source.mapindexed(
+               function(i, x, y){
+                   var tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[i] + c.o));
+                   tile.position.x = x * 32;
+                   tile.position.y = y * 32;
+                   c.owner.container.instance.addChild(tile);
+               }
+           )
        }
-      });
+      }
+     );
+
+
+
+
+
 
 
     C("actor",
@@ -65,43 +74,70 @@
        unmount: function(c){console.log(c.owner + " unmount");},
        destroy: function(c){console.log(c.owner + " destroy");}})
 
+
+
+
+
     makeActor = function(name){
         return E(name,
                 C.new.actor(),
-                C.new.sprite({image: "assets/sprites/objects/alphasquare.png"}),
-                C.new.wander(),
-                C.new.protoreport());
+                C.new.sprite(),
+                C.new.wander());
     }
 
 
 
-    root =
-        E("game",
-          C.new.pixi({width:1400,height:900}),
-          C.new.loop(),
-          C.new.protoreport());
+
+
+    makeMapLayer = function(name, opts){
+        return E(name,
+          C.new.container(),
+          C.new.container_outline(),
+          C.new.wander(),
+          C.new.grid(),
+          C.new.background(opts));
+    }
+
+
+    root = E("game",
+             C.new.pixi({width: window.screen.width,
+                         height: window.screen.height}),
+             C.new.loop() ,
+            makeMapLayer("terrain", {o:30}));
 
     map = E("map",
-            C.new.grid({width:200,height:160}),
-            C.new.background(),
-            C.new.protoreport())
+             C.new.container(),
+            C.new.container_outline(),
+             makeMapLayer("terrain", {o:30})
+             //makeMapLayer("actors", {o:40})
+           )
+
+    people = E("people")
+
+
+    for(var i=0;i<10;i++){
+        people.add(makeActor("colonist"));
+    }
+
+    map.add(people);
 
     root.add(map);
 
-    root.add(E("people",
-               makeActor("Joe"),
-               C.new.protoreport()));
+
 
 
 
     PIXI.loader
       .add('assets/atlas.png')
       .add('assets/atlas.json')
+      .add("assets/sprites/objects/alphasquare.png")
       .load(function(){
         console.log("assets loaded");
 
         E.mount(root);
       });
+
+
 
 
 </script>
