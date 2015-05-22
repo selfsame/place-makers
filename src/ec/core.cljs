@@ -26,7 +26,8 @@
 (defn report [x] (.log js/console (str "%c cljs %c " x) "background: #bada55;" "background:white;"))
 
 
-
+(defn- kw->str [s]
+  (apply str (rest (str s))))
 
 (defn array-remove [o v]
   (let [i (.indexOf o v)]
@@ -132,9 +133,9 @@
   (-seq [o] (map #(list % (aget o %)) (.keys js/Object o)))
   ILookup
   (-lookup
-    ([this k] (-lookup this k nil))
+    ([this k] (-lookup this (if (keyword? k) (kw->str k) k) nil))
     ([this k not-found]
-      (let [v (aget this k)]
+      (let [v (aget this (if (keyword? k) (kw->str k) k))]
         (or v not-found))))
   IMapEntry
   (-key [o] (first o))
@@ -250,7 +251,6 @@
 
 
 
-
 (def-api ChildAPI [o p]
   "owner" {:doc "Returns the owning entity."
             :get (fn [] p)})
@@ -354,8 +354,12 @@
   o))
 
 
+
 (defn C [bind data protocols]
-  (let [valid-protocols
+  (let [ctor (if (fn? data)
+               (fn [] (js/____pc data))
+               (fn [] data))
+        valid-protocols
         (select-keys (js->clj protocols) (map clj->js (keys proto-map)))
         _init (or (get valid-protocols "init") (fn [o]))
         _mount (or (get valid-protocols "mount") (fn [o]))
@@ -387,7 +391,7 @@
 
             instance))
         newfn (fn [& more]
-                (let [o (structor data)
+                (let [o (structor (ctor))
                       opts (first more)]
                   (if opts (.map (js/locals opts) #(aset o % (aget opts %))))
                   (init o)

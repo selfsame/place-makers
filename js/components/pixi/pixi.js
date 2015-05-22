@@ -9,10 +9,10 @@ C("pixi",
     function(c){
       c.renderer = PIXI.autoDetectRenderer(c.width, c.height);
       document.body.appendChild(c.renderer.view);
-      c.stage = new PIXI.Container;
+
     },
     update:
     function(c){
-        c.renderer.render(c.stage);
+        c.renderer.render(c.owner.transform);
     }
   });

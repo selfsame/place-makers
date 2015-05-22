@@ -49,3 +49,37 @@
          ~o))))
 
 
+
+
+(defn- un-dot [syms]
+  (loop [col syms]
+    (if (< (count col) 2)
+      (first col)
+      (let [[obj op field] (take 3 col)
+            form (cond (number? field) (list 'get obj field)
+                       (#{"." '.} op) (list '. obj (symbol (str "-" field))))]
+        (recur (cons form (drop 3 col)))))))
+
+
+
+(defn break-symbol [sym]
+  (let [matcher (re-matcher #"[\.]|[^\.]+" (str sym))
+        res (loop [col []] (if-let [res (re-find matcher)] (recur (conj col res)) col))]
+    (cons (symbol (first res)) (rest res))))
+
+(defmacro .* [& more]
+  (let [-address  (map (fn [part]
+                        (cond (vector? part)
+                              (list "." (get part 0))
+                              (symbol? part)
+                              (break-symbol part)))
+                      more)
+        address (apply concat -address)
+        s-exp (un-dot address)]
+  `(~@s-exp)))
+
+
+
+(macroexpand '(.* root.children[0].position.x))
+
+
