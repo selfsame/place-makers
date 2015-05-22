@@ -13,6 +13,6 @@ C("pixi",
     },
     update:
     function(c){
-        //c.renderer.render(c.stage);
+        c.renderer.render(c.stage);
     }
   });

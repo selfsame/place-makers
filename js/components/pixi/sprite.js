@@ -5,11 +5,13 @@ C("sprite",{
 
   {init:
    function(c){
-     c.texture = PIXI.Texture.fromImage(c.image);
-     c.instance = new PIXI.Sprite(c.texture);
+
    },
    mount:
    function(c){
+     c.texture = PIXI.Texture.fromFrame(25);
+     c.instance = new PIXI.Sprite(c.texture);
+     //c.owner.findAncestorComponents("container")[0].instance.addChild(c.instance);
      root.pixi.stage.addChild(c.instance);
    },
    update:
