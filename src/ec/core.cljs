@@ -318,9 +318,9 @@
                        (.map named -o)
                        (-o (aget named 0)))))}
   "findComponents" {:doc "[string] returns Array of found components attached to this entity."
-          :value (fn [s] (let [here (.filter (.map (:c @o) -o) #(= (.-type %) s))]
+          :value (fn [s] (let [here (.filter (.map (:c @o) -o) #(= (aget % "type") s))]
                            (.apply (.-concat here) here
-                                   (.map (.map (:e @o) -o) #(.findComponents % s)))))}
+                                   (.map (.map (:e @o) -o) #((aget % "findComponents") % s)))))}
   "findAncestorComponents" {:doc "[string] returns Array of found components attached to this entity."
           :value (fn [s]
                    (if-not (aget o "owner")  (js/Array.)

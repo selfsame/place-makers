@@ -13,13 +13,14 @@
   (event/listen (.-body js/document) "keydown"
                 #(do ;(report (.-keyCode %))
                    (array-unique-add KEYS (.-keyCode %))))
-  (event/listen (.-body js/document) "keyup" #(array-remove KEYS (.-keyCode %))) )
+  (event/listen (.-body js/document) "keyup" #(array-remove KEYS (.-keyCode %)))
+  (report "keycodes in window.KEYS"))
 
 (aset js/window "KEYS" KEYS)
 (aset js/window "eventListen" listen!)
 
 
-(def abs (.-abs js/Math))
+(def abs (aget js/Math "abs"))
 
 
 (defn in? [a v] (not= (.indexOf a v) -1))
@@ -50,7 +51,7 @@
 (defn- reduce-operate [op col]
   (cond (instance? js/Array (first col)) (to-array (reduce #(operate op %1 %2) col))
         (vector? (first col)) (vec (reduce #(operate op %1 %2) col))
-        (instance? js/Object (first col))  (clj->js (zipmap [:x :y :z :w] (reduce #(operate op %1 %2) col)))))
+        (instance? js/Object (first col))  (clj->js (zipmap ["x" "y" "z" "w"] (reduce #(operate op %1 %2) col)))))
 
 (defn v+ [& more] (reduce-operate + more))
 (defn v- [& more] (reduce-operate - more))
@@ -58,7 +59,16 @@
 (defn vdiv [& more] (reduce-operate / more))
 (defn -v [op & more] (reduce-operate op more))
 
+(def cap (fn [n lb ub] (min (max lb n) ub)))
 
+(aset js/window "std"
+ #js {"randInt" rand-int
+      "randNth" rand-nth
+      "cap" cap})
+
+(defn owner [c] (aget c "owner"))
+(defn ancestor-comps [o s] ((aget o "findAncestorComponents") s))
+(defn comps [o s] ((aget o "findComponents") s))
 
 (defn constrain [straint [x y]]
   (if-let [[cxl cxr cyt cyb] straint]
@@ -66,40 +76,43 @@
      (min (max cyt y) cyb)]
     [x y]))
 
+(def HW (* js/WIDTH 0.5))
+(def HH (* js/HEIGHT 0.5))
 
 (C "camera"
-   #js {:x 0 :y 0 :scale 1 :target nil :constraint #js [-1000 1000 -1000 1000] :display nil}
+   #js {:x HW :y HH :scale 1 :target nil :constraint #js [-1000 1000 -1000 1000] :display nil}
    {"mount"
     (fn [c]
-      (let [pixi (get (.findAncestorComponents (:owner c) "pixi") 0)]
-        (aset c "display" #js [(:width pixi) (:height pixi)])
+
+      (let [renderer (aget (comps (owner c) "renderer") 0)]
+        (aset c "display" #js [(aget renderer "w") (aget renderer "h" )])
         (aset c "target"
-              (or (.find (:owner c) (:target c))
-                  (:owner c)))))
+              (or ((aget (owner c) "find") (.-target c))
+                  (owner c)))))
     "update"
     (fn [c]
       (let [
-            scale (cond (in? KEYS 109) (*= c "scale" 0.95)
-                        (in? KEYS 107) (*= c "scale" 1.15)
-                        :else (:scale c))
-            [dw dh] (:display c)
-            straints (v- (v* (:constraint c) scale) [0 dw 0 dh])
+            scale (cond (in? KEYS 109) (aset c "scale" (cap (- (aget c "scale") .01) 0.1 3))
+                        (in? KEYS 107) (aset c "scale" (cap (+ (aget c "scale") .01) 0.1 3))
+                        :else (.-scale c))
+            [dw dh] (.-display c)
+            straints (v- (v* (.-constraint c) scale) [0 dw 0 dh])
 
-            x (:x c)
-            y (:y c)
+            x (.-x c)
+            y (.-y c)
             dx (cond (in? KEYS 37) -10 (in? KEYS 39) 10 :else 0)
             dy (cond (in? KEYS 38) -10 (in? KEYS 40) 10 :else 0)
 
             [cx cy] (constrain straints (v+ [x y] [dx dy]))]
 
-        (aset (:scale (:transform (:target c))) "x" scale)
-        (aset (:scale (:transform (:target c))) "y" scale)
+        (aset (.-scale (.-transform (.-target c))) "x" scale)
+        (aset (.-scale (.-transform (.-target c))) "y" scale)
 
         (aset c "x" cx)
         (aset c "y" cy)
 
-        (aset (:transform (:target c)) "x" (- cx))
-        (aset (:transform (:target c)) "y" (- cy))
+        (aset (.-transform (.-target c)) "x" (- cx))
+        (aset (.-transform (.-target c)) "y" (- cy))
 
 
       ))})

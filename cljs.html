@@ -1,8 +1,10 @@
 <html>
 <head>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
+
     <script type="text/javascript" src="js/CONSTANTS.js"></script>
     <script type="text/javascript" src="js/required.js"></script>
-    <script type="text/javascript" src="js/cljs/main.js"></script>
+    <script type="text/javascript" src="js/cljs/dev.js"></script>
     <script type="text/javascript" src='js/lib/pixi.min.js'></script>
     <script type="text/javascript" src='js/lib/Perlin.js'></script>
     <script type="text/javascript" src='js/lib/pathfinding.min.js'></script>
@@ -66,10 +68,10 @@
 
     root = E("game",
              C.new.loop(),
-             C.new.renderer({w: window.screen.width / 2, h: window.screen.height / 2}),
+             C.new.renderer({w: 800, h: 600}),
              C.new.camera({target:"map"}),
              map,
-            ui
+             ui
             )
 
 
