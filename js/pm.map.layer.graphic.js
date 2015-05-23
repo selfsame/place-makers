@@ -1,4 +1,4 @@
-whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'scene'], {
+whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'pm.scene'], {
 
   defaults: {
     'fill': {
@@ -22,8 +22,6 @@ whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'scene'], {
       v = 1;
     } else if (f < 70) {
       v = 2;
-    } else if (f < 80) {
-      v = 3;
     } else {
       v = 4;
     }
@@ -43,6 +41,7 @@ whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'scene'], {
       'variant': v,
       'sprite': s
     }
+
     return tile;
   },
 
