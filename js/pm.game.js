@@ -19,7 +19,7 @@ whale.Service('pm.game', ['pm.constants'], {
     this.state.time.speed = Constants.GAME_SPEED;
   },
 
-  _loop: function() {
+  _loop: function(test) {
     if (!this.state.started || this.state.paused || this.state.ended) return false;
 
     this.state.time.tick++;

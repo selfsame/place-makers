@@ -1,4 +1,4 @@
-whale.Service('pm.view.controls', ['pm.game'], {
+whale.Service('pm.controls.view', ['pm.game'], {
   construct: function(Game) {
     this.game = Game;
 
