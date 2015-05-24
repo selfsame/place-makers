@@ -6,6 +6,4 @@ whale.Factory('pm.entity', [], {
     r: 0
   },
 
-
-
 }, 'whale.Events');

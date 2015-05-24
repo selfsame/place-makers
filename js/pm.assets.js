@@ -7,8 +7,7 @@ whale.Service('pm.assets', ['pm.game', 'pixi'], {
     Game.requestWait(this);
 
     PIXI.loader
-      .add('assets/sprites/objects/alphasquare.png')
-      .add('assets/sprites/packed/dirt.json')
+      .add('assets/sheet.json')
       .load(this.onLoaded.bind(this));
 
   },

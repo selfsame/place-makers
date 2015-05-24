@@ -7,7 +7,7 @@ whale.Factory('pm.part.transform.sprite', ['pixi', 'pm.scene'], {
   construct: function(PIXI, Scene, frame, x, y, r) {
     this.scene = Scene;
     this.sprite = PIXI.Sprite.fromFrame(frame);
-    this.sprite.anchor = { x: .5, y: .5 };
+    this.sprite.anchor = { x: 0.5, y: 0.5 };
     this.scene.stage.addChild(this.sprite);
     this._super(x, y, r);
   },

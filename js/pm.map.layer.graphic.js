@@ -16,17 +16,9 @@ whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'pm.scene'], {
     var utils = whale.get('pm.utils');
 
     var f = utils.rint(0, 100);
-    var v = 4;
+    var v = f < 60 ? 0 : 1;
 
-    if (f < 60) {
-      v = 1;
-    } else if (f < 70) {
-      v = 2;
-    } else {
-      v = 4;
-    }
-
-    var s = this.PIXI.Sprite.fromFrame('tile.dirt.' + v + '.png');
+    var s = this.PIXI.Sprite.fromFrame('ground.dirt.00' + v + '.png');
 
     s.position.x = this.tileWidth * x;
     s.position.y = this.tileHeight * y;
@@ -48,7 +40,7 @@ whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'pm.scene'], {
   construct: function(Constants, PIXI, Scene) {
     this.PIXI = PIXI;
 
-    var c = new this.PIXI.Container();
+    var c = new this.PIXI.ParticleContainer;
 
     c.height = Constants.TILE_HEIGHT * Constants.DEFAULT_MAP_WIDTH;
     c.width = Constants.TILE_WIDTH * Constants.DEFAULT_MAP_WIDTH;
