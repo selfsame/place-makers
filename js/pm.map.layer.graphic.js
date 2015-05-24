@@ -26,7 +26,7 @@ whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'pm.scene'], {
     s.tileX = x;
     s.tileY = y;
 
-    this.container.addChildAt(s, x + y * this.height);
+    this.container.addChild(s);//, x + y * this.height);
 
     var tile = {
       'type': 'dirt',
@@ -42,11 +42,9 @@ whale.Factory('pm.map.layer.graphic', ['pm.constants', 'pixi', 'pm.scene'], {
 
     var c = new this.PIXI.ParticleContainer;
 
-    c.height = Constants.TILE_HEIGHT * Constants.DEFAULT_MAP_WIDTH;
-    c.width = Constants.TILE_WIDTH * Constants.DEFAULT_MAP_WIDTH;
     c.zoom = 1;
     c.scale.x = c.scale.y = c.zoom;
-    c.interactive = true;
+    // c.interactive = true;
 
     this.container = c;
 

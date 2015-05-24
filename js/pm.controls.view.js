@@ -8,8 +8,8 @@ whale.Service('pm.controls.view', ['pm.game'], {
     this.btnStart.on('click', this.onClickStart, this);
     this.btnPause.on('click', this.onClickPause, this);
 
-    this.btnPause.hide();
   },
+
   onClickStart: function() {
     if (this.game.state.started) {
       this.game.end();
@@ -21,6 +21,7 @@ whale.Service('pm.controls.view', ['pm.game'], {
       this.btnStart.html('stop');
     }
   },
+
   onClickPause: function() {
     if (this.game.state.paused) {
       this.game.resume();

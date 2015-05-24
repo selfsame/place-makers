@@ -155,7 +155,7 @@ whale.Factory('pm.map.grid', ['pm.constants'], {
   fill: function(x, y, w, h, fn) {
     for (var i = 0; i < h; i++) {
       for (var j = 0; j < w; j++) {
-        this.transform(x + j, y + i, fn);
+        this.transform(x + i, y + j, fn);
       }
     }
   }
