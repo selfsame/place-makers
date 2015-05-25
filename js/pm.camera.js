@@ -1,7 +1,9 @@
-whale.Service('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.scene'], {
+whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.scene'], {
 
   zoom: 0,
   zoomSpeed: 0,
+
+  cursor: null,
 
   keys: {},
 
@@ -12,9 +14,10 @@ whale.Service('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     yd: 0
   },
 
-  construct: function(Key, Constants, Game, Scene) {
+  construct: function(Key, Constants, Game, Scene, cursor) {
     this.Constants = Constants;
     this.Scene = Scene;
+    this.cursor = cursor;
 
     this.zoom = this.Constants.CAMERA_ZOOM;
 
@@ -38,19 +41,13 @@ whale.Service('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     this.listen(this.keys.q, 'keydown', this.zoomOut, this);
     this.listen(this.keys.e, 'keydown', this.zoomIn, this);
 
-    this.listen(this.keys.q, 'keyup', this.stopZoom, this);
-    this.listen(this.keys.e, 'keyup', this.stopZoom, this);
-
     Game.hook(this, this.move.bind(this), this.Constants.CAMERA_POLL_FREQ);
-
-    this._zoom();
 
   },
 
   move: function(delta) {
     this.Scene.stage.x += this.speed.xl - this.speed.xr;
     this.Scene.stage.y += this.speed.yu - this.speed.yd;
-    this._zoom();
   },
 
   moveUp: function() {
@@ -86,39 +83,90 @@ whale.Service('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
   },
 
   zoomIn: function() {
-    this.doZoomIn = true;
+    var curs = this.cursor.location;
+
+    var prcnt = this.center();
+    prcnt = [
+      prcnt[0] / (this.Constants.DEFAULT_MAP_WIDTH * this.Constants.TILE_WIDTH * this.zoom),
+      prcnt[1] / (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom)
+    ];
+
+    this.zoom *= this.Constants.CAMERA_ZOOM_SPEED;
+
+    this.Scene.stage.scale.x = this.zoom;
+    this.Scene.stage.scale.y = this.zoom;
+
+    this.focus(
+      (this.Constants.DEFAULT_MAP_WIDTH * this.Constants.TILE_WIDTH * this.zoom * prcnt[0]),
+      (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom * prcnt[1])
+    );
+
+    this.interpolateToTile(curs[0], curs[1], 1 - 1/this.Constants.CAMERA_ZOOM_SPEED);
   },
 
   zoomOut: function() {
-    this.doZoomOut = true;
+    var curs = this.cursor.location;
+
+    var prcnt = this.center();
+    prcnt = [
+      prcnt[0] / (this.Constants.DEFAULT_MAP_WIDTH * this.Constants.TILE_WIDTH * this.zoom),
+      prcnt[1] / (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom)
+    ];
+
+    this.zoom /= this.Constants.CAMERA_ZOOM_SPEED;
+
+    this.Scene.stage.scale.x = this.zoom;
+    this.Scene.stage.scale.y = this.zoom;
+
+    this.focus(
+      (this.Constants.DEFAULT_MAP_WIDTH * this.Constants.TILE_WIDTH * this.zoom * prcnt[0]),
+      (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom * prcnt[1])
+    );
+
+    this.interpolateToTile(curs[0], curs[1], 1 - this.Constants.CAMERA_ZOOM_SPEED);
   },
 
-  stopZoom: function() {
-    this.doZoomIn = false;
-    this.doZoomOut = false;
-    this.zoomSpeed = 0;
+  /*
+   * Focus center of camera on x/y coordinates (px)
+   */
+  focus: function(x, y) {
+    this.Scene.stage.x = -1 * (x - (this.Constants.DEFAULT_SCRN_WIDTH / 2));
+    this.Scene.stage.y = -1 * (y - (this.Constants.DEFAULT_SCRN_HEIGHT / 2));
   },
 
-  _zoom: function() {
+  /*
+   * Get the x/y coordinates (px) of the center of the camera
+   * returns the inputs to focus(x, y)
+   */
+  center: function() {
+    return [
+      -1 * (this.Scene.stage.x - (this.Constants.DEFAULT_SCRN_WIDTH / 2)),
+      -1 * (this.Scene.stage.y - (this.Constants.DEFAULT_SCRN_HEIGHT / 2))
+    ];
+  },
 
-    if (this.doZoomOut) this.zoomSpeed -= this.Constants.CAMERA_ZOOM_SPEED;
-    if (this.doZoomIn) this.zoomSpeed += this.Constants.CAMERA_ZOOM_SPEED;
+  /*
+   * Focus center of camera on x/y coordinates (tile)
+   */
+  focusTile: function(x, y) {
+    this.focus(
+      (x * this.Constants.TILE_WIDTH + this.Constants.TILE_WIDTH / 2) * this.zoom,
+      (y * this.Constants.TILE_HEIGHT + this.Constants.TILE_HEIGHT / 2) * this.zoom
+    );
+  },
 
-    var tooClose = this.zoom >= this.Constants.CAMERA_MAX_ZOOM_IN;
-    var tooFar = this.zoom <= this.Constants.CAMERA_MAX_ZOOM_OUT;
+  interpolateTo: function(x, y, r) {
+    var interp = whale.get('pm.utils').lerp2(this.center(), [x, y], r);
+    this.focus(interp[0], interp[1]);
+  },
 
-    if (tooClose) {
-      if (this.zoomSpeed > 0) this.zoomSpeed = 0;
-      this.zoom = this.Constants.CAMERA_MAX_ZOOM_IN;
-    } else if (tooFar) {
-      this.zoom = this.Constants.CAMERA_MAX_ZOOM_OUT;
-      if (this.zoomSpeed < 0) this.zoomSpeed = 0;
-    }
-
-    var x = this.zoom += this.zoomSpeed;
-    var y = this.zoom += this.zoomSpeed;
-
-    this.Scene.stage.scale = {x: x, y: y};
+  interpolateToTile: function(x, y, r) {
+    var interp = whale.get('pm.utils').lerp2(
+      this.center(), [
+        (x * this.Constants.TILE_WIDTH + this.Constants.TILE_WIDTH / 2) * this.zoom,
+        (y * this.Constants.TILE_HEIGHT + this.Constants.TILE_HEIGHT / 2) * this.zoom
+      ], r);
+    this.focus(interp[0], interp[1]);
   }
 
 }, 'whale.Listener');

@@ -1,6 +1,7 @@
-whale.Factory('pm.map.grid', ['pm.constants'], {
+whale.Factory('pm.map.grid', [], {
   width: 0,
   height: 0,
+  doPopulate: true,
 
   /*
    * The real 1d array of tiles
@@ -23,14 +24,17 @@ whale.Factory('pm.map.grid', ['pm.constants'], {
     'ob': 0
   },
 
-  construct: function(Constants, w, h, defaults) {
-    this.width = w || Constants.DEFAULT_MAP_WIDTH;
-    this.height = h || Constants.DEFAULT_MAP_HEIGHT;
+  construct: function(w, h, defaults) {
+    this.width = w;
+    this.height = h;
 
     this.defaults = defaults || this.defaults;
 
     this._tiles = Object.create(this.ArrayType, this.width * this.height);
-    this.fill(0, 0, this.width, this.height, this.prePopulate.bind(this));
+
+    if (this.doPopulate) {
+      this.fill(0, 0, this.width, this.height, this.prePopulate.bind(this));
+    }
   },
 
   /*

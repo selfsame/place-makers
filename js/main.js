@@ -4,7 +4,10 @@ window.game.monitor = whale.make('pm.game.monitor', '#game-monitor');
 
 // start the game once it's loaded
 window.game.when('load', function() {
-  var g = whale.make('pm.map.layer.graphic');
+  window.m = whale.make('pm.map');
+  window.cursor = whale.make('pm.map.cursor', window.m);
+  window.camera = whale.make('pm.camera', cursor);
+
   var u = whale.get('pm.utils');
 
   for (var i = 0; i < 1000; i++) {
