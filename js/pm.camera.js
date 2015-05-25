@@ -41,6 +41,11 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     this.listen(this.keys.q, 'keydown', this.zoomOut, this);
     this.listen(this.keys.e, 'keydown', this.zoomIn, this);
 
+    this.focus(
+      (this.Constants.DEFAULT_MAP_WIDTH * this.Constants.TILE_WIDTH * this.zoom * .5),
+      (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom * .5)
+    );
+
     Game.hook(this, this.move.bind(this), this.Constants.CAMERA_POLL_FREQ);
 
   },

@@ -18,6 +18,14 @@ window.game.when('load', function() {
     whale.make('pm.part.transform.sprite', 'building.walls.chunky.base.' + t +'.png', x, y, 0);
   }
 
+  var k = whale.make('pm.controls.key', 82);
+  k.when('keydown', function() {
+    whale.make(
+      'pm.part.transform.sprite',
+      'building.floors.blueprint.build.png',
+      window.cursor.location[0] * 32 + 16, window.cursor.location[1] * 32 + 16, 0);
+  });
+
   // draw some tiles on each corner
   whale.make(
     'pm.part.transform.sprite',
