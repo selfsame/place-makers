@@ -1,4 +1,11 @@
-whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.scene'], {
+whale.Factory('pm.camera',
+[
+  'pm.controls.key',
+  'pm.constants',
+  'pm.game',
+  'pm.scene',
+  'pm.controls.mouse'
+], {
 
   zoom: 0,
   zoomSpeed: 0,
@@ -14,7 +21,7 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     yd: 0
   },
 
-  construct: function(Key, Constants, Game, Scene, cursor) {
+  construct: function(Key, Constants, Game, Scene, Mouse, cursor) {
     this.Constants = Constants;
     this.Scene = Scene;
     this.cursor = cursor;
@@ -25,8 +32,6 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     this.keys.a = new Key(65);
     this.keys.s = new Key(83);
     this.keys.d = new Key(68);
-    this.keys.q = new Key(81);
-    this.keys.e = new Key(69);
 
     this.listen(this.keys.w, 'keydown', this.moveUp, this);
     this.listen(this.keys.a, 'keydown', this.moveLeft, this);
@@ -38,8 +43,7 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     this.listen(this.keys.s, 'keyup', this.stopDown, this);
     this.listen(this.keys.d, 'keyup', this.stopRight, this);
 
-    this.listen(this.keys.q, 'keydown', this.zoomOut, this);
-    this.listen(this.keys.e, 'keydown', this.zoomIn, this);
+    this.listen(Mouse, 'wheel', this.onWheel, this);
 
     this.focus(
       (this.Constants.DEFAULT_MAP_WIDTH * this.Constants.TILE_WIDTH * this.zoom * .5),
@@ -87,7 +91,7 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
     this.speed.xr = 0;
   },
 
-  zoomIn: function() {
+  zoomIn: function(amnt) {
     var curs = this.cursor.location;
 
     var prcnt = this.center();
@@ -96,7 +100,7 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
       prcnt[1] / (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom)
     ];
 
-    this.zoom *= this.Constants.CAMERA_ZOOM_SPEED;
+    this.zoom *= amnt; //this.Constants.CAMERA_ZOOM_SPEED;
 
     this.Scene.stage.scale.x = this.zoom;
     this.Scene.stage.scale.y = this.zoom;
@@ -106,10 +110,10 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
       (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom * prcnt[1])
     );
 
-    this.interpolateToTile(curs[0], curs[1], 1 - 1/this.Constants.CAMERA_ZOOM_SPEED);
+    this.interpolateToTile(curs[0], curs[1], 1 - 1/amnt);
   },
 
-  zoomOut: function() {
+  zoomOut: function(amnt) {
     var curs = this.cursor.location;
 
     var prcnt = this.center();
@@ -118,7 +122,7 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
       prcnt[1] / (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom)
     ];
 
-    this.zoom /= this.Constants.CAMERA_ZOOM_SPEED;
+    this.zoom /= amnt; //this.Constants.CAMERA_ZOOM_SPEED;
 
     this.Scene.stage.scale.x = this.zoom;
     this.Scene.stage.scale.y = this.zoom;
@@ -128,7 +132,15 @@ whale.Factory('pm.camera', ['pm.controls.key', 'pm.constants', 'pm.game', 'pm.sc
       (this.Constants.DEFAULT_MAP_HEIGHT * this.Constants.TILE_HEIGHT * this.zoom * prcnt[1])
     );
 
-    this.interpolateToTile(curs[0], curs[1], 1 - this.Constants.CAMERA_ZOOM_SPEED);
+    this.interpolateToTile(curs[0], curs[1], 1 - amnt);
+  },
+
+  onWheel: function(m, e) {
+    if (e.wheelDeltaY > 0 || e.detail > 0) {
+      this.zoomIn(this.Constants.CAMERA_ZOOM_SPEED);
+    } else {
+      this.zoomOut(this.Constants.CAMERA_ZOOM_SPEED);
+    }
   },
 
   /*
