@@ -1,5 +1,5 @@
 window.game = whale.get('pm.game');
-window.game.monitor = whale.make('pm.game.monitor', '#game-monitor');
+// window.game.monitor = whale.make('pm.game.monitor', '#game-monitor');
 
 
 // start the game once it's loaded
@@ -18,12 +18,14 @@ window.game.when('load', function() {
     whale.make('pm.part.transform.sprite', 'building.walls.chunky.base.' + t +'.png', x, y, 0);
   }
 
-  var k = whale.make('pm.controls.key', 82);
-  k.when('keydown', function() {
+  var m = whale.get('pm.controls.mouse');
+  m.when('lmbclick', function() {
+    var r = u.rint(0, 7);
+    var f = u.rint(0, 10);
     whale.make(
       'pm.part.transform.sprite',
-      'building.floors.blueprint.build.png',
-      window.cursor.location[0] * 32 + 16, window.cursor.location[1] * 32 + 16, 0);
+      'colonist.walk.00' + f + '.png',
+      window.cursor.location[0] * 32 + 16, window.cursor.location[1] * 32 + 16, r);
   });
 
   // draw some tiles on each corner

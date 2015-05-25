@@ -18,6 +18,6 @@ window.constants = whale.register('pm.constants', {
   CAMERA_ZOOM: 1,
   CAMERA_MAX_ZOOM_OUT: .3,
   CAMERA_MAX_ZOOM_IN: 8,
-  CAMERA_ZOOM_SPEED: 1.2
+  CAMERA_ZOOM_SPEED: 1.1
 
 })
