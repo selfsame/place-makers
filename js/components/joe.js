@@ -66,24 +66,25 @@ C("background",
      c.owner.transform.addChild(base);
 
      var p = new PERLIN.Generator();
-     p.octaves = 1
+     p.octaves = 2
      p.frequency = 0.2
      p.persistance = .2
-
+     c.instance = new PIXI.ParticleContainer()
      p.generate ([0,0], [c.source.w, c.source.h], function(point, value){
        var modval = parseInt((value * 8) + 5);
-       if ( ((value < 0.7) &&
-             (point[0] % modval == 0 || point[1] % modval == 0)) ){
-           var tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[0] + c.o));
+       if ( ((value > 0.5 && value < 0.9) &&
+             ((point[0] % modval == 0 || point[0] % modval == 2) ||
+              (point[1] % modval == 0 || point[1] % modval == 2))) ){
+           var tile = new PIXI.Sprite(PIXI.Texture.fromFrame(c.source.data[5] + c.o));
            tile.position.x = point[0] * TILESIZE;
-           tile.position.y = point[1] * TILESIZE;
-           c.owner.transform.addChild(tile);
-         }
-
+         tile.position.y = point[1] * TILESIZE;
+         c.instance.addChild(tile);
        }
-     )
+      }
 
+                )
 
+     c.owner.transform.addChild(c.instance);
 
 
 
