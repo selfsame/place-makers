@@ -122,3 +122,52 @@ C("rect",
    }
   }
 )
+
+
+C("pivotgizmo",
+
+  {fill : 0xff0000,
+   alpha: 1.0,
+   radius: 10},
+
+  {init:
+   function(c){
+     c.instance = new PIXI.Graphics;
+
+     c.instance.beginFill(c.fill, c.alpha);
+     c.instance.drawCircle(c.x, c.y, c.radius);
+     c.instance.endFill();
+   },
+   mount:
+   function(c){
+     c.owner.transform.addChild(c.instance);
+   },
+   update:
+   function(c){
+     c.instance.x = c.owner.transform.pivot.x;
+     c.instance.y = c.owner.transform.pivot.y;
+     c.owner.transform.setChildIndex(c.instance, c.owner.transform.children.length - 1);
+
+   },
+   unmount:
+   function(c){
+     c.instance.parent.removeChild(c.instance);
+   }
+  }
+)
+
+
+
+C("drawsort",
+
+  {fn:function(a, b){ return a.position.y - b.position.y; }},
+
+  {update:
+   function(c){
+     c.owner.transform.children.sort(c.fn);
+   }
+  }
+ )
+
+
+

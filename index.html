@@ -49,7 +49,7 @@
     actors = E("actors",
               makeActor("Joe"))
 
-    for(var i=0;i<200;i++){
+    for(var i=0;i<2000;i++){
         actors.add(makeActor("colonist"));
     }
 
@@ -69,7 +69,7 @@
              C.new.renderer({w: window.screen.width / 2, h: window.screen.height / 2}),
              C.new.camera({target:"map"}),
              map,
-            ui
+             ui
             )
 
 

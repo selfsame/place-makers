@@ -33,6 +33,7 @@
                                x:-32, y:4, alpha:0.7}),
                 C.new.sprite({image:"place/ball.png"}),
                 //C.new.rect({fill:0x10ffff, x:0, y:-10, h:6, w:TILESIZE}),
+                //C.new.pivotgizmo({radius:4,fill:0x00ff00}),
                 C.new.wander());
     }
 
@@ -49,27 +50,28 @@
 
 
     actors = E("actors",
-              makeActor("Joe"))
+               C.new.drawsort())
 
-    for(var i=0;i<200;i++){
+    for(var i=0;i<1000;i++){
         actors.add(makeActor("colonist"));
     }
 
     map = E("map",
+
             makeMapLayer("terrain", {o:32}),
-            actors
-           )
+            C.new.camera({target:"map"}),
+            actors)
 
     ui = E("ui",
-           C.new.rect({fill:0x7cb3ff, h:30, w:WIDTH}),
+           //C.new.rect({fill:0x7cb3ff, h:30, w:WIDTH}),
            C.new.text({text:"This is the UI"}),
            C.new.text({text:"camera keys: arrows, '+' '-'", x:400})
           )
 
     root = E("game",
              C.new.loop(),
-             C.new.renderer({w: 800, h: 600}),
-             C.new.camera({target:"map"}),
+              C.new.renderer({w: window.screen.width / 2, h: window.screen.height / 2}),
+
              map,
              ui
             )
