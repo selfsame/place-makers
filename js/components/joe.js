@@ -20,6 +20,12 @@ C("wander", {speed:2},
     c.owner.transform.x += c.vx;
     c.owner.transform.y += c.vy; }});
 
+C("oscillate", {axis:"x", speed:10, distance:10},
+  {update:
+   function(c) {
+     c.owner.transform[c.axis] += Math.sin(new Date() * 0.01 / c.speed) * (c.distance * .1);
+   }})
+
 C("grid",
 
   {w:TILEWIDTH,

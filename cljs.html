@@ -1,6 +1,6 @@
 <html>
 <head>
-    <script type='text/javascript' id='lt_ws' src='http://localhost:49181/socket.io/lighttable/ws.js'></script>
+    <script type='text/javascript' id='lt_ws' src='http://localhost:50747/socket.io/lighttable/ws.js'></script>
 
     <script type="text/javascript" src="js/CONSTANTS.js"></script>
     <script type="text/javascript" src="js/required.js"></script>
@@ -52,7 +52,7 @@
     actors = E("actors",
                C.new.drawsort())
 
-    for(var i=0;i<1000;i++){
+    for(var i=0;i<100;i++){
         actors.add(makeActor("colonist"));
     }
 
@@ -63,7 +63,7 @@
             actors)
 
     ui = E("ui",
-           //C.new.rect({fill:0x7cb3ff, h:30, w:WIDTH}),
+           C.new.rect({fill:0x7cb3ff, h:30, w:WIDTH, y:HEIGHT - 40}),
            C.new.text({text:"This is the UI"}),
            C.new.text({text:"camera keys: arrows, '+' '-'", x:400})
           )

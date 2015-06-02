@@ -64,6 +64,13 @@
    (v+ v1 (v* (v- v2 v1) r)))
 
 
+(defn make
+  ([cstr] (make cstr {}))
+  ([cstr data]
+   (when-let [ctor (aget (aget C "new") cstr)]
+     (ctor (clj->js data)))))
+
+
 (aset js/window "std"
  #js {"randInt" rand-int
       "randNth" rand-nth
@@ -79,18 +86,33 @@
   (aset (.-pivot cont) "x" (v2get 0 v2 0))
   (aset (.-pivot cont) "y" (v2get 1 v2 0)))
 
+(defn index! [c n]
+  (let [instance (or (aget c "instance") c)
+        container (aget instance "parent")
+        idx (cap n 0 (dec (.-length (.-children container))))]
+    (when container
+      (.setChildIndex container instance idx))))
 
 
 
 (def HW (* js/WIDTH 0.5))
 (def HH (* js/HEIGHT 0.5))
 
+(make "rect" {:w 5 :h 5 :x 0 :y 0})
+
 (C "camera"
    #js {:x 0 :y 0 :scale 1 :target nil :display nil}
    {"mount"
     (fn [c]
-      (let [renderer (aget (ancestor-comps (owner c) "renderer") 0)]
-        (aset c "display" #js [(aget renderer "w") (aget renderer "h" )])))
+      (let [renderer (aget (ancestor-comps (owner c) "renderer") 0)
+            focus (make "rect" {:w 6 :h 6 :x -3 :y -3 :fill 16711680})]
+        (aset c "display" #js [(aget renderer "w") (aget renderer "h" )])
+        (aset c "focus" focus)
+
+        (.add (owner c) focus)
+
+
+        ))
     "update"
     (fn [c]
       (let [
@@ -122,7 +144,9 @@
         (aset c "x" cx)
         (aset c "y" cy)
 
-
+        (aset (.-instance (.-focus c)) "x" (+ lcx (* dw 0.5)))
+        (aset (.-instance (.-focus c)) "y" (+ lcy (* dh 0.5)))
+        (index! (.-focus c) 1000)
 
 
       ))})

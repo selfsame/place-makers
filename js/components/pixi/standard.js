@@ -6,7 +6,7 @@ C("renderer",
 
   {init:
    function(c){
-     c.instance = PIXI.autoDetectRenderer(c.w, c.h);
+     c.instance = new PIXI.WebGLRenderer(c.w, c.h);
      document.body.appendChild(c.instance.view);
    },
    mount:
@@ -107,7 +107,7 @@ C("rect",
 
   {init:
    function(c){
-     c.instance = new PIXI.Graphics;
+     c.instance = new PIXI.Graphics();
      c.instance.beginFill(c.fill, c.alpha);
      c.instance.drawRect(c.x, c.y, c.w, c.h);
      c.instance.endFill();
